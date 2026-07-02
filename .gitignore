@@ -1,0 +1,32 @@
+# === VS Code & IDEs ===
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# === OS Clutter ===
+.DS_Store
+Thumbs.db
+
+# === Claude / AI / Local Assistant Clutter ===
+# (If you save prompt histories, logs, or workspace dumps locally)
+.claude/
+*claude-session*
+*.log
+
+
+# === Javascript / Build Tools ===
+# Node dependencies if you use Grunt, Gulp, or Webpack for JS linting/minification
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+
+# === PHP / Composer ===
+# Ignore vendor directory if you bring in external PHP libraries via Composer
+vendor/
+composer.phar
