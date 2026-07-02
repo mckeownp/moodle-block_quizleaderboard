@@ -1,0 +1,411 @@
+/**
+ * Styles for block_quizleaderboard.
+ *
+ * Uses CSS custom properties so the colours remain visible on both
+ * Moodle's default Boost (light) and Classic (light) themes, and degrade
+ * gracefully to solid colours when custom properties are unsupported.
+ *
+ * @package    block_quizleaderboard
+ * @copyright  2024 Your Name <you@example.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/* =========================================================
+   Wrapper
+   ========================================================= */
+
+.block-quizleaderboard {
+    font-size: 0.875rem;
+    overflow: hidden;
+}
+
+.ql-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* =========================================================
+   Table base
+   ========================================================= */
+
+.ql-table {
+    border-collapse: collapse;
+    width: 100%;
+    white-space: nowrap;
+}
+
+.ql-table thead tr {
+    background-color: var(--primary, #0f6cbf);
+    color: #fff;
+}
+
+.ql-table th,
+.ql-table td {
+    padding: 0.35rem 0.6rem;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.ql-table th.ql-col-name,
+.ql-table td.ql-name {
+    text-align: left;
+    min-width: 9rem;
+}
+
+/* =========================================================
+   Sortable column headers
+   ========================================================= */
+
+.ql-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 1.4rem; /* room for the icon */
+}
+
+.ql-table th.sortable:hover,
+.ql-table th.sortable:focus {
+    background-color: rgba(255, 255, 255, 0.15);
+    outline: 2px solid rgba(255, 255, 255, 0.6);
+    outline-offset: -2px;
+}
+
+/* Sort indicator icon using CSS pseudo-elements. */
+.ql-sort-icon {
+    display: inline-block;
+    position: absolute;
+    right: 0.35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0.75rem;
+    height: 0.75rem;
+    opacity: 0.45;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512'%3E%3Cpath fill='%23fff' d='M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm239-65L201 64c-9.4-9.4-24.6-9.4-33.9 0L41 223c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.ql-table th.sortable.ql-sort-asc .ql-sort-icon {
+    opacity: 1;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512'%3E%3Cpath fill='%23fff' d='M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z'/%3E%3C/svg%3E");
+}
+
+.ql-table th.sortable.ql-sort-desc .ql-sort-icon {
+    opacity: 1;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512'%3E%3Cpath fill='%23fff' d='M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.1 15.1 4.4 41-17 41z'/%3E%3C/svg%3E");
+}
+
+/* =========================================================
+   Per-question mark colour coding
+   ========================================================= */
+
+/* Full marks — green */
+.ql-table td.ql-full {
+    background-color: #d4edda;
+    color: #155724;
+    font-weight: 600;
+}
+
+/* Partial marks — orange/amber */
+.ql-table td.ql-partial {
+    background-color: #fff3cd;
+    color: #856404;
+    font-weight: 600;
+}
+
+/* Zero marks — red */
+.ql-table td.ql-zero {
+    background-color: #f8d7da;
+    color: #721c24;
+    font-weight: 600;
+}
+
+/* Not attempted — neutral dash */
+.ql-table td.ql-notdone {
+    color: #6c757d;
+    background-color: #f8f9fa;
+}
+
+/* Totals column — slightly emphasised */
+.ql-table td.ql-total,
+.ql-table td.ql-pct {
+    font-weight: 600;
+}
+
+/* Rank column — muted */
+.ql-table td.ql-rank {
+    color: #6c757d;
+    min-width: 2rem;
+}
+
+/* Alternating row shading (even rows only, avoids conflicting with mark colours) */
+.ql-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.ql-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* =========================================================
+   Legend
+   ========================================================= */
+
+.ql-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+}
+
+.ql-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.ql-swatch {
+    display: inline-block;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+.ql-swatch.ql-full    { background-color: #d4edda; }
+.ql-swatch.ql-partial { background-color: #fff3cd; }
+.ql-swatch.ql-zero    { background-color: #f8d7da; }
+.ql-swatch.ql-notdone { background-color: #f8f9fa; }
+
+/* =========================================================
+   Updated timestamp
+   ========================================================= */
+
+.ql-updated {
+    font-size: 0.75rem;
+}
+
+/* =========================================================
+   Responsive — tighten on small screens
+   ========================================================= */
+
+@media (max-width: 600px) {
+    .ql-table th,
+    .ql-table td {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.78rem;
+    }
+
+    .ql-table th.ql-col-name,
+    .ql-table td.ql-name {
+        min-width: 6rem;
+    }
+}
+
+/* Two-line column headers (e.g. Total / Out of N) */
+.ql-table th .ql-subheader {
+    display: block;
+    font-size: 0.75em;
+    font-weight: 400;
+    opacity: 0.85;
+    line-height: 1.2;
+}
+
+/* =========================================================
+   Time-travel controls
+   ========================================================= */
+
+.ql-timetravel-controls {
+    background: var(--color-background-secondary, #f8f9fa);
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+}
+
+.ql-timetravel-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.ql-timetravel-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+.ql-timetravel-toggle {
+    cursor: pointer;
+}
+
+.ql-timetravel-slider-wrapper {
+    margin-top: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.ql-timetravel-slider {
+    flex: 1 1 auto;
+    max-width: 28rem;
+}
+
+.ql-timetravel-slider:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ql-timetravel-value {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary, #6c757d);
+    white-space: nowrap;
+    min-width: 11rem;
+}
+
+.ql-timetravel-notice {
+    margin-top: 0.4rem;
+}
+
+.ql-updated.ql-historical {
+    color: #856404;
+    font-weight: 600;
+}
+
+.ql-timetravel-error {
+    margin-bottom: 0.5rem;
+}
+
+/* =========================================================
+   Quiz timing info panel
+   ========================================================= */
+
+.ql-timing-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
+    background: var(--color-background-secondary, #f8f9fa);
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    font-size: 0.82rem;
+}
+
+.ql-timing-item {
+    white-space: nowrap;
+}
+
+.ql-timing-label {
+    color: var(--color-text-secondary, #6c757d);
+}
+
+.ql-timing-value {
+    font-weight: 600;
+    color: var(--color-text-primary, #212529);
+}
+
+/* =========================================================
+   Custom range pickers
+   ========================================================= */
+
+.ql-range-pickers {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed rgba(0, 0, 0, 0.12);
+}
+
+.ql-range-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.ql-range-label {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #6c757d);
+    font-weight: 500;
+}
+
+.ql-range-input {
+    min-width: 13rem;
+}
+
+.ql-range-error {
+    flex-basis: 100%;
+}
+
+#ql-range-update,
+#ql-range-reset {
+    height: 2.1rem;
+}
+
+/* Description question cells — neutral grey, not coloured like scored cells */
+.ql-table td.ql-description {
+    background-color: #f0f0f0;
+    color: #999;
+    font-style: italic;
+}
+
+.ql-swatch.ql-description {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+}
+
+/* =========================================================
+   Auto-update controls
+   ========================================================= */
+
+.ql-autoupdate-controls {
+    background: var(--color-background-secondary, #f8f9fa);
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    font-size: 0.875rem;
+}
+
+.ql-autoupdate-interval {
+    text-align: center;
+}
+
+/* =========================================================
+   Back-to-quiz link / top nav
+   ========================================================= */
+
+.ql-top-nav {
+    display: flex;
+    align-items: center;
+}
+
+/* =========================================================
+   Slider "go to time" row
+   ========================================================= */
+
+.ql-slider-gotime-wrapper {
+    margin-top: 0.4rem;
+}
+
+/* =========================================================
+   Slider value label update
+   ========================================================= */
+
+.ql-timetravel-value {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary, #6c757d);
+    white-space: nowrap;
+}
+
+/* Description question column header — muted, matches cell style */
+.ql-table th.ql-col-description {
+    opacity: 0.6;
+    font-style: italic;
+}
