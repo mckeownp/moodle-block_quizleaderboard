@@ -22,6 +22,9 @@ define([], function() {
 
     'use strict';
 
+    /**
+     * Initialise standalone auto-update.
+     */
     function init() {
         // If the time-travel controls exist, timetravel.js will manage
         // auto-update. Yield to avoid double-wiring.
@@ -30,50 +33,79 @@ define([], function() {
         }
 
         const autoupdateControls = document.getElementById('ql-autoupdate-controls');
-        const autoupdateToggle   = document.getElementById('ql-autoupdate-toggle');
+        const autoupdateToggle = document.getElementById('ql-autoupdate-toggle');
         const autoupdateInterval = document.getElementById('ql-autoupdate-interval');
-        const container          = document.getElementById('ql-leaderboard-container');
+        const container = document.getElementById('ql-leaderboard-container');
 
-        if (!autoupdateToggle || !container) { return; }
+        if (!autoupdateToggle || !container) {
+            return;
+        }
 
         // Infer quiz id and sesskey from the autoupdate controls or the page URL.
-        const url     = new URL(window.location.href);
-        const quizid  = url.searchParams.get('quizid');
+        const url = new URL(window.location.href);
+        const quizid = url.searchParams.get('quizid');
         const ajaxurl = autoupdateControls ? autoupdateControls.dataset.ajaxurl : null;
         const sesskey = autoupdateControls ? autoupdateControls.dataset.sesskey : null;
 
-        if (!quizid || !ajaxurl || !sesskey) { return; }
+        if (!quizid || !ajaxurl || !sesskey) {
+            return;
+        }
 
         let timer = null;
 
+        /**
+         * Fetch the latest leaderboard HTML and swap it into the container.
+         * @returns {Promise}
+         */
         function refreshTable() {
-            const params = new URLSearchParams({ quizid, sesskey });
-            fetch(ajaxurl + '?' + params.toString(), {
+            const params = new URLSearchParams({quizid, sesskey});
+            return fetch(ajaxurl + '?' + params.toString(), {
                 method: 'GET', credentials: 'same-origin'
             })
-            .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+            .then(r => {
+                if (!r.ok) {
+                    throw new Error();
+                }
+                return r.text();
+            })
             .then(html => {
                 container.innerHTML = html;
                 if (window.require) {
                     window.require(['block_quizleaderboard/leaderboard'], lb => lb.init());
                 }
+                return;
             })
             .catch(() => { /* Fail silently — don't disrupt the UI. */ });
         }
 
+        /**
+         * (Re)start the auto-update timer if the toggle is checked.
+         */
         function startTimer() {
             stopTimer();
-            if (!autoupdateToggle.checked) { return; }
+            if (!autoupdateToggle.checked) {
+                return;
+            }
             const secs = Math.max(5, parseInt(autoupdateInterval ? autoupdateInterval.value : 60, 10) || 60);
             timer = setInterval(refreshTable, secs * 1000);
         }
 
+        /**
+         * Stop the auto-update timer, if running.
+         */
         function stopTimer() {
-            if (timer) { clearInterval(timer); timer = null; }
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
         }
 
         autoupdateToggle.addEventListener('change', () => {
-            autoupdateToggle.checked ? startTimer() : stopTimer();
+            if (autoupdateToggle.checked) {
+                startTimer();
+            } else {
+                stopTimer();
+            }
         });
 
         if (autoupdateInterval) {
@@ -84,5 +116,5 @@ define([], function() {
         startTimer();
     }
 
-    return { init };
+    return {init};
 });

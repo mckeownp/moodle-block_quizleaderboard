@@ -81,19 +81,19 @@
     width: 0.75rem;
     height: 0.75rem;
     opacity: 0.45;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512'%3E%3Cpath fill='%23fff' d='M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41zm239-65L201 64c-9.4-9.4-24.6-9.4-33.9 0L41 223c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z'/%3E%3C/svg%3E");
+    background-image: url([[pix:block_quizleaderboard|sort]]);
     background-repeat: no-repeat;
     background-size: contain;
 }
 
 .ql-table th.sortable.ql-sort-asc .ql-sort-icon {
     opacity: 1;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512'%3E%3Cpath fill='%23fff' d='M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z'/%3E%3C/svg%3E");
+    background-image: url([[pix:block_quizleaderboard|sort-asc]]);
 }
 
 .ql-table th.sortable.ql-sort-desc .ql-sort-icon {
     opacity: 1;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512'%3E%3Cpath fill='%23fff' d='M279 224H41c-21.4 0-32.1-25.9-17-41L143 64c9.4-9.4 24.6-9.4 33.9 0l119 119c15.1 15.1 4.4 41-17 41z'/%3E%3C/svg%3E");
+    background-image: url([[pix:block_quizleaderboard|sort-desc]]);
 }
 
 /* =========================================================
@@ -176,10 +176,21 @@
     flex-shrink: 0;
 }
 
-.ql-swatch.ql-full    { background-color: #d4edda; }
-.ql-swatch.ql-partial { background-color: #fff3cd; }
-.ql-swatch.ql-zero    { background-color: #f8d7da; }
-.ql-swatch.ql-notdone { background-color: #f8f9fa; }
+.ql-swatch.ql-full {
+    background-color: #d4edda;
+}
+
+.ql-swatch.ql-partial {
+    background-color: #fff3cd;
+}
+
+.ql-swatch.ql-zero {
+    background-color: #f8d7da;
+}
+
+.ql-swatch.ql-notdone {
+    background-color: #f8f9fa;
+}
 
 /* =========================================================
    Updated timestamp

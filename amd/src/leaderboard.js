@@ -43,7 +43,7 @@ define([], function() {
         // Current sort state per table.
         let sortState = {
             col: -1,
-            dir: 'none',  // 'asc' | 'desc' | 'none'
+            dir: 'none', // 'asc' | 'desc' | 'none'
         };
 
         headers.forEach(function(th) {
@@ -95,8 +95,8 @@ define([], function() {
         });
 
         // Sort the rows.
-        const tbody  = table.querySelector('tbody');
-        const rows   = Array.from(tbody.querySelectorAll('tr'));
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
 
         rows.sort(function(a, b) {
             const cellA = a.querySelectorAll('td')[colidx];

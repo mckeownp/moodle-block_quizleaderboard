@@ -42,12 +42,19 @@ define([], function() {
             seconds = 0;
         }
 
-        const mins  = Math.floor(seconds / 60);
-        const hrs   = Math.floor(seconds / 3600);
-        const days  = Math.floor(seconds / 86400);
+        const mins = Math.floor(seconds / 60);
+        const hrs = Math.floor(seconds / 3600);
+        const days = Math.floor(seconds / 86400);
         const weeks = Math.floor(seconds / (86400 * 7));
         const months = Math.floor(seconds / (86400 * 30));
 
+        /**
+         * Pluralise a unit label if needed, e.g. "2 days" vs "1 day".
+         *
+         * @param {number} n
+         * @param {string} unit
+         * @return {string}
+         */
         function p(n, unit) {
             return n + ' ' + unit + (n !== 1 ? 's' : '');
         }
@@ -75,12 +82,27 @@ define([], function() {
     // Datetime-local helpers (browser-local timezone)
     // -------------------------------------------------------------------------
 
+    /**
+     * Convert a <input type="datetime-local"> value to a unix timestamp.
+     *
+     * @param {string} value
+     * @return {number|null}
+     */
     function datetimeLocalToTimestamp(value) {
-        if (!value) { return null; }
+        if (!value) {
+            return null;
+        }
         const ms = Date.parse(value);
         return isNaN(ms) ? null : Math.floor(ms / 1000);
     }
 
+    /**
+     * Convert a unix timestamp to the value format expected by
+     * <input type="datetime-local">, in the browser's local timezone.
+     *
+     * @param {number} timestamp
+     * @return {string}
+     */
     function toDatetimeLocalString(timestamp) {
         const d = new Date(timestamp * 1000);
         const pad = n => String(n).padStart(2, '0');
@@ -92,28 +114,33 @@ define([], function() {
     // Main init
     // -------------------------------------------------------------------------
 
+    /**
+     * Initialise the time-travel controls on the standalone leaderboard page.
+     */
     function init() {
         const controls = document.getElementById('ql-timetravel-controls');
-        if (!controls) { return; }
+        if (!controls) {
+            return;
+        }
 
-        const toggle          = document.getElementById('ql-timetravel-toggle');
-        const sliderWrap      = document.getElementById('ql-timetravel-slider-wrapper');
-        const slider          = document.getElementById('ql-timetravel-slider');
-        const valueLabel      = document.getElementById('ql-timetravel-value');
-        const container       = document.getElementById('ql-leaderboard-container');
-        const rangePickers    = document.getElementById('ql-range-pickers');
+        const toggle = document.getElementById('ql-timetravel-toggle');
+        const sliderWrap = document.getElementById('ql-timetravel-slider-wrapper');
+        const slider = document.getElementById('ql-timetravel-slider');
+        const valueLabel = document.getElementById('ql-timetravel-value');
+        const container = document.getElementById('ql-leaderboard-container');
+        const rangePickers = document.getElementById('ql-range-pickers');
         const rangeStartInput = document.getElementById('ql-range-start');
-        const rangeEndInput   = document.getElementById('ql-range-end');
-        const rangeUpdateBtn  = document.getElementById('ql-range-update');
-        const rangeResetBtn   = document.getElementById('ql-range-reset');
-        const rangeError      = document.getElementById('ql-range-error');
-        const goTimeInput     = document.getElementById('ql-slider-gotime');
-        const goTimeBtn       = document.getElementById('ql-slider-goto');
-        const goTimeWrapper   = document.getElementById('ql-slider-gotime-wrapper');
+        const rangeEndInput = document.getElementById('ql-range-end');
+        const rangeUpdateBtn = document.getElementById('ql-range-update');
+        const rangeResetBtn = document.getElementById('ql-range-reset');
+        const rangeError = document.getElementById('ql-range-error');
+        const goTimeInput = document.getElementById('ql-slider-gotime');
+        const goTimeBtn = document.getElementById('ql-slider-goto');
+        const goTimeWrapper = document.getElementById('ql-slider-gotime-wrapper');
 
         // Auto-update elements (may not exist if time-travel mode is active on load).
         const autoupdateControls = document.getElementById('ql-autoupdate-controls');
-        const autoupdateToggle   = document.getElementById('ql-autoupdate-toggle');
+        const autoupdateToggle = document.getElementById('ql-autoupdate-toggle');
         const autoupdateInterval = document.getElementById('ql-autoupdate-interval');
 
         if (!toggle || !slider || !container) {
@@ -121,32 +148,36 @@ define([], function() {
             return;
         }
 
-        const quizid  = parseInt(controls.dataset.quizid, 10);
+        const quizid = parseInt(controls.dataset.quizid, 10);
         const ajaxurl = controls.dataset.ajaxurl;
         const sesskey = controls.dataset.sesskey;
 
         const originalEarliest = parseInt(controls.dataset.earliest, 10);
-        const originalLatest   = parseInt(controls.dataset.latest, 10);
+        const originalLatest = parseInt(controls.dataset.latest, 10);
 
-        let earliest     = originalEarliest;
-        let latest       = originalLatest;
+        let earliest = originalEarliest;
+        let latest = originalLatest;
         let totalMinutes = parseInt(controls.dataset.totalminutes, 10);
 
-        let debounceTimer    = null;
-        let autoupdateTimer  = null;
+        let debounceTimer = null;
+        let autoupdateTimer = null;
 
         // ---------------------------------------------------------------
         // Duration label (human-readable)
         // ---------------------------------------------------------------
 
+        /**
+         * Update the human-readable duration label and keep the "go to time"
+         * input in sync with the current slider position.
+         */
         function updateLabel() {
-            const minutes  = parseInt(slider.value, 10);
-            const seconds  = minutes * 60;
-            const elapsed  = formatDuration(seconds);
+            const minutes = parseInt(slider.value, 10);
+            const seconds = minutes * 60;
+            const elapsed = formatDuration(seconds);
             // Show both elapsed duration and the actual timestamp.
-            const absTime  = new Date((earliest + seconds) * 1000);
-            const pad      = n => String(n).padStart(2, '0');
-            const timeStr  = absTime.getFullYear() + '-' +
+            const absTime = new Date((earliest + seconds) * 1000);
+            const pad = n => String(n).padStart(2, '0');
+            const timeStr = absTime.getFullYear() + '-' +
                              pad(absTime.getMonth() + 1) + '-' +
                              pad(absTime.getDate()) + ' ' +
                              pad(absTime.getHours()) + ':' +
@@ -166,19 +197,33 @@ define([], function() {
         // Table refresh
         // ---------------------------------------------------------------
 
+        /**
+         * Fetch the leaderboard HTML "as of" a given point in time (or live,
+         * if asoftime is 0) and swap it into the container.
+         *
+         * @param {number} asoftime Unix timestamp cut-off, or 0 for live data.
+         */
         function refreshTable(asoftime) {
-            const params = new URLSearchParams({ quizid, sesskey });
-            if (asoftime > 0) { params.set('asoftime', asoftime); }
+            const params = new URLSearchParams({quizid, sesskey});
+            if (asoftime > 0) {
+                params.set('asoftime', asoftime);
+            }
 
             fetch(ajaxurl + '?' + params.toString(), {
                 method: 'GET', credentials: 'same-origin'
             })
-            .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+            .then(r => {
+                if (!r.ok) {
+                    throw new Error();
+                }
+                return r.text();
+            })
             .then(html => {
                 container.innerHTML = html;
                 if (window.require) {
                     window.require(['block_quizleaderboard/leaderboard'], lb => lb.init());
                 }
+                return;
             })
             .catch(() => {
                 const notice = document.createElement('div');
@@ -196,12 +241,22 @@ define([], function() {
             window.history.replaceState({}, '', url.toString());
         }
 
+        /**
+         * Compute the unix timestamp currently represented by the slider position.
+         *
+         * @return {number}
+         */
         function currentAsOfTime() {
             return earliest + parseInt(slider.value, 10) * 60;
         }
 
+        /**
+         * Debounce table refreshes while the slider is being dragged.
+         */
         function debouncedRefresh() {
-            if (debounceTimer) { clearTimeout(debounceTimer); }
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
+            }
             debounceTimer = setTimeout(() => refreshTable(currentAsOfTime()), 250);
         }
 
@@ -209,13 +264,21 @@ define([], function() {
         // Auto-update (live mode only)
         // ---------------------------------------------------------------
 
+        /**
+         * (Re)start the auto-update timer, if enabled.
+         */
         function startAutoupdate() {
             stopAutoupdate();
-            if (!autoupdateToggle || !autoupdateToggle.checked) { return; }
+            if (!autoupdateToggle || !autoupdateToggle.checked) {
+                return;
+            }
             const secs = Math.max(5, parseInt(autoupdateInterval ? autoupdateInterval.value : 60, 10) || 60);
             autoupdateTimer = setInterval(() => refreshTable(0), secs * 1000);
         }
 
+        /**
+         * Stop the auto-update timer, if running.
+         */
         function stopAutoupdate() {
             if (autoupdateTimer) {
                 clearInterval(autoupdateTimer);
@@ -223,6 +286,12 @@ define([], function() {
             }
         }
 
+        /**
+         * Show/hide the auto-update controls and pause/resume the timer to
+         * match whether time-travel mode is active.
+         *
+         * @param {boolean} enabled
+         */
         function setTimeTravelActive(enabled) {
             // Hide/show auto-update controls and pause/resume accordingly.
             if (autoupdateControls) {
@@ -239,11 +308,18 @@ define([], function() {
         // Slider rebase
         // ---------------------------------------------------------------
 
+        /**
+         * Rebase the slider's min/max to a new earliest/latest window,
+         * preserving the current "as of" position as closely as possible.
+         *
+         * @param {number} newEarliest
+         * @param {number} newLatest
+         */
         function rebaseSlider(newEarliest, newLatest) {
             const previousAsOf = currentAsOfTime();
 
-            earliest     = newEarliest;
-            latest       = newLatest;
+            earliest = newEarliest;
+            latest = newLatest;
             totalMinutes = Math.max(1, Math.ceil((latest - earliest) / 60));
 
             slider.min = 0;
@@ -260,8 +336,15 @@ define([], function() {
         // Range error helper
         // ---------------------------------------------------------------
 
+        /**
+         * Show or clear the range-validation error message.
+         *
+         * @param {string} msg Error message, or an empty string to clear it.
+         */
         function setRangeError(msg) {
-            if (!rangeError) { return; }
+            if (!rangeError) {
+                return;
+            }
             rangeError.textContent = msg;
             rangeError.style.display = msg ? '' : 'none';
         }
@@ -274,12 +357,22 @@ define([], function() {
         toggle.addEventListener('change', () => {
             const enabled = toggle.checked;
             slider.disabled = !enabled;
-            if (sliderWrap)    { sliderWrap.style.display   = enabled ? '' : 'none'; }
-            if (goTimeWrapper) { goTimeWrapper.style.display = enabled ? '' : 'none'; }
-            if (rangePickers)  { rangePickers.style.display  = enabled ? '' : 'none'; }
+            if (sliderWrap) {
+                sliderWrap.style.display = enabled ? '' : 'none';
+            }
+            if (goTimeWrapper) {
+                goTimeWrapper.style.display = enabled ? '' : 'none';
+            }
+            if (rangePickers) {
+                rangePickers.style.display = enabled ? '' : 'none';
+            }
 
             [rangeStartInput, rangeEndInput, rangeUpdateBtn, rangeResetBtn, goTimeInput, goTimeBtn]
-                .forEach(el => { if (el) { el.disabled = !enabled; } });
+                .forEach(el => {
+                    if (el) {
+                        el.disabled = !enabled;
+                    }
+                });
 
             if (enabled) {
                 setTimeTravelActive(true);
@@ -301,9 +394,11 @@ define([], function() {
         if (goTimeBtn) {
             goTimeBtn.addEventListener('click', () => {
                 const ts = datetimeLocalToTimestamp(goTimeInput ? goTimeInput.value : null);
-                if (ts === null) { return; }
+                if (ts === null) {
+                    return;
+                }
                 const clamped = Math.min(Math.max(ts, earliest), latest);
-                slider.value  = Math.round((clamped - earliest) / 60);
+                slider.value = Math.round((clamped - earliest) / 60);
                 updateLabel();
                 debouncedRefresh();
             });
@@ -313,9 +408,11 @@ define([], function() {
         if (goTimeInput) {
             goTimeInput.addEventListener('change', () => {
                 const ts = datetimeLocalToTimestamp(goTimeInput.value);
-                if (ts === null) { return; }
+                if (ts === null) {
+                    return;
+                }
                 const clamped = Math.min(Math.max(ts, earliest), latest);
-                slider.value  = Math.round((clamped - earliest) / 60);
+                slider.value = Math.round((clamped - earliest) / 60);
                 updateLabel();
                 debouncedRefresh();
             });
@@ -325,7 +422,7 @@ define([], function() {
         if (rangeUpdateBtn) {
             rangeUpdateBtn.addEventListener('click', () => {
                 const newStart = datetimeLocalToTimestamp(rangeStartInput ? rangeStartInput.value : null);
-                const newEnd   = datetimeLocalToTimestamp(rangeEndInput   ? rangeEndInput.value   : null);
+                const newEnd = datetimeLocalToTimestamp(rangeEndInput ? rangeEndInput.value : null);
                 if (newStart === null || newEnd === null || newEnd <= newStart) {
                     setRangeError(controls.dataset.rangeinvalidmsg || 'Invalid date/time range.');
                     return;
@@ -339,8 +436,12 @@ define([], function() {
         if (rangeResetBtn) {
             rangeResetBtn.addEventListener('click', () => {
                 setRangeError('');
-                if (rangeStartInput) { rangeStartInput.value = toDatetimeLocalString(originalEarliest); }
-                if (rangeEndInput)   { rangeEndInput.value   = toDatetimeLocalString(originalLatest); }
+                if (rangeStartInput) {
+                    rangeStartInput.value = toDatetimeLocalString(originalEarliest);
+                }
+                if (rangeEndInput) {
+                    rangeEndInput.value = toDatetimeLocalString(originalLatest);
+                }
                 rebaseSlider(originalEarliest, originalLatest);
             });
         }
@@ -371,11 +472,11 @@ define([], function() {
 
         // If time-travel is NOT already active on page load, start auto-update.
         if (!toggle.checked) {
-            setTimeTravelActive(false);  // starts auto-update in live mode.
+            setTimeTravelActive(false); // Starts auto-update in live mode.
         } else {
-            setTimeTravelActive(true);   // suppress auto-update in time-travel.
+            setTimeTravelActive(true); // Suppress auto-update in time-travel.
         }
     }
 
-    return { init };
+    return {init};
 });
