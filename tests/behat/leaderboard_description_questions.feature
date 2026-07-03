@@ -45,9 +45,7 @@ Feature: Quiz leaderboard handles description questions correctly
     And user "student1" has begun a leaderboard attempt at quiz "Desc-first"
     When I log in as "teacher1"
     And I view the full leaderboard for quiz "Desc-first"
-    Then I should see "Q1" in the ".ql-col-q" "css_element"
-    And I should see "Q2" in the ".ql-col-q" "css_element"
-    And the leaderboard column header at slot 1 should show "-" for a description
+    Then the leaderboard column header at slot 1 should show "-" for a description
     And the leaderboard column header at slot 2 should show "Q1"
     And the leaderboard column header at slot 3 should show "Q2"
 

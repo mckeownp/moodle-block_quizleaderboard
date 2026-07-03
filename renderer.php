@@ -285,7 +285,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
                     // Description question — informational only, no mark possible.
                     $cells .= html_writer::tag('td', 'n/a', [
                         'data-sort' => -2,
-                        'class'     => 'ql-q ql-description',
+                        'class'     => 'ql-description',
                         'title'     => get_string('descriptionquestion', 'block_quizleaderboard'),
                     ]);
                 } else if ($mark === null) {

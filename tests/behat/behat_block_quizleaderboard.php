@@ -692,12 +692,14 @@ class behat_block_quizleaderboard extends behat_base {
      */
     public function leaderboard_column_header_at_slot_should_show(int $slotnum, string $expected) {
         $table = $this->find('css', 'table.ql-table');
-        $headers = $table->findAll('css', 'thead th');
 
-        // Slot N corresponds to the Nth th element (0-indexed internally).
+        // Only select question/description column headers (ql-col-q class),
+        // not the fixed columns (rank #, Student, ID, Total, %) which precede them.
+        $headers = $table->findAll('css', 'thead th.ql-col-q');
+
         if (!isset($headers[$slotnum - 1])) {
             throw new ExpectationException(
-                "The leaderboard table does not have a column at slot $slotnum",
+                "The leaderboard table does not have a question/description column at slot $slotnum",
                 $this->getSession()
             );
         }
@@ -712,7 +714,7 @@ class behat_block_quizleaderboard extends behat_base {
 
         if ($actual !== $expected) {
             throw new ExpectationException(
-                "Expected column header at slot $slotnum to show '$expected' but found '$actual'",
+                "Expected question column header at slot $slotnum to show '$expected' but found '$actual'",
                 $this->getSession()
             );
         }
@@ -729,10 +731,9 @@ class behat_block_quizleaderboard extends behat_base {
     public function leaderboard_column_header_at_slot_is_description(int $slotnum) {
         $this->leaderboard_column_header_at_slot_should_show($slotnum, '-');
 
-        // Also verify the column carries the ql-col-description CSS class that
-        // visually distinguishes it from real question columns.
+        // Also verify the column carries the ql-col-description CSS class.
         $table   = $this->find('css', 'table.ql-table');
-        $headers = $table->findAll('css', 'thead th');
+        $headers = $table->findAll('css', 'thead th.ql-col-q');
         $th      = $headers[$slotnum - 1];
         $class   = $th->getAttribute('class') ?? '';
 
