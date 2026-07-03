@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Leaderboard data-fetching service.
@@ -24,8 +32,6 @@
  */
 
 namespace block_quizleaderboard;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Service class for retrieving live (or historical) leaderboard data.
@@ -117,9 +123,9 @@ class leaderboard_service {
         $data = new \stdClass();
 
         // 1. Quiz slots in order, including question type so we can identify
-        //    description questions (qtype='description') which have no mark
-        //    and should display as a neutral dash rather than a red zero.
-        //    Moodle 5.0+ always has question_references/question_versions tables.
+        // description questions (qtype='description') which have no mark
+        // and should display as a neutral dash rather than a red zero.
+        // Moodle 5.0+ always has question_references/question_versions tables.
         $sql = "SELECT qs.id, qs.slot, qs.maxmark, q.qtype
                   FROM {quiz_slots} qs
                   JOIN {question_references} qr
@@ -384,7 +390,7 @@ class leaderboard_service {
             return null; // No graded submission yet (at this point in time).
         }
 
-        // fraction is NULL when Moodle records a zero-score graded submission for
+        // Fraction is NULL when Moodle records a zero-score graded submission for
         // certain question behaviours/types — treat that as an explicit 0.0 rather
         // than "ungraded", since we already know the state is a graded state.
         return $lastgraded->fraction !== null

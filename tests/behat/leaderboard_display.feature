@@ -122,11 +122,35 @@ Feature: Quiz leaderboard display and colour coding
     And I view the full leaderboard for quiz "Test Quiz"
     Then I should see "S0001"
 
-  Scenario: Non-adaptive quiz shows a warning instead of a leaderboard
+  Scenario: Deferred feedback quiz shows an info note but still renders the leaderboard
     Given the following "activities" exist:
       | activity | name           | course | idnumber | preferredbehaviour |
       | quiz     | Deferred Quiz  | C1     | quiz2    | deferredfeedback    |
+    And the following "questions" exist:
+      | questioncategory | qtype     | name | questiontext             | defaultmark |
+      | Test questions   | truefalse | DQ1  | Deferred question is true | 5          |
+    And quiz "Deferred Quiz" contains the following questions:
+      | question | page |
+      | DQ1      | 1    |
     And the block_quizleaderboard plugin is added with quizid for "Deferred Quiz" in course "C1"
+    And user "student1" has begun a leaderboard attempt at quiz "Deferred Quiz"
     When I log in as "teacher1"
-    And I am on the "Deferred Quiz" "mod_quiz > View" page logged in as "teacher1"
-    Then I should see "not in adaptive mode"
+    And I view the full leaderboard for quiz "Deferred Quiz"
+    Then I should see "deferred feedback"
+    And I should see "Alice Anderson"
+
+  Scenario: Deferred feedback quiz shows dashes until quiz is submitted and graded
+    Given the following "activities" exist:
+      | activity | name           | course | idnumber | preferredbehaviour |
+      | quiz     | Deferred Quiz  | C1     | quiz2    | deferredfeedback    |
+    And the following "questions" exist:
+      | questioncategory | qtype     | name | questiontext             | defaultmark |
+      | Test questions   | truefalse | DQ1  | Deferred question is true | 5          |
+    And quiz "Deferred Quiz" contains the following questions:
+      | question | page |
+      | DQ1      | 1    |
+    And the block_quizleaderboard plugin is added with quizid for "Deferred Quiz" in course "C1"
+    And user "student1" has begun a leaderboard attempt at quiz "Deferred Quiz"
+    When I log in as "teacher1"
+    And I view the full leaderboard for quiz "Deferred Quiz"
+    Then the leaderboard cell for "Alice Anderson" question 1 should show "-" with class "ql-notdone"

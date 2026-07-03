@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Behat custom step definitions for block_quizleaderboard.
@@ -25,7 +33,7 @@ require_once(__DIR__ . '/../../../../lib/behat/behat_base.php');
 
 use Behat\Gherkin\Node\TableNode;
 use Behat\Mink\Exception\ExpectationException;
-// mod_quiz's attempt-related classes live under the mod_quiz namespace on
+// These attempt-related classes live under the mod_quiz namespace on
 // modern Moodle (quiz_settings used to be called plain "quiz" in much older
 // versions, before the mod_quiz\ namespace migration). We import them here
 // so the rest of this file can refer to them as the short, unqualified
@@ -57,15 +65,14 @@ class behat_block_quizleaderboard extends behat_base {
      */
     protected $attemptidcache = [];
 
-    // -------------------------------------------------------------------
-    // Setup: adding the block to a quiz page
-    // -------------------------------------------------------------------
+    // Setup: adding the block to a quiz page.
 
     /**
      * Add a block_quizleaderboard instance configured for a specific quiz to
      * the quiz's course page (so it is visible on the quiz "View" page via
      * 'all'/'mod-quiz' applicable format inheritance).
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Given /^the block_quizleaderboard plugin is added with quizid for "(?P<quiz_name>(?:[^"]|\\")*)" in course "(?P<course_shortname>(?:[^"]|\\")*)"$/
      *
      * @param string $quizname
@@ -102,9 +109,7 @@ class behat_block_quizleaderboard extends behat_base {
         context_block::instance($blockinstance->id);
     }
 
-    // -------------------------------------------------------------------
-    // Setup: starting quiz attempts
-    // -------------------------------------------------------------------
+    // Setup: starting quiz attempts.
 
     /**
      * Start a fresh in-progress quiz attempt for a user, with no responses yet.
@@ -131,6 +136,7 @@ class behat_block_quizleaderboard extends behat_base {
      * "question X is answered correctly/incorrectly" steps so that tests can
      * control timing and correctness independently).
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Given /^user "(?P<username>(?:[^"]|\\")*)" has begun a leaderboard attempt at quiz "(?P<quiz_name>(?:[^"]|\\")*)" with responses:$/
      *
      * @param string    $username
@@ -194,14 +200,13 @@ class behat_block_quizleaderboard extends behat_base {
         }
     }
 
-    // -------------------------------------------------------------------
-    // Setup: answering questions (correctness + optional timestamp)
-    // -------------------------------------------------------------------
+    // Setup: answering questions (correctness + optional timestamp).
 
     /**
      * Mark a question as answered correctly (full marks) for a user's current
      * attempt at the given quiz, using the live submission time.
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Given /^question "(?P<question_name>(?:[^"]|\\")*)" is answered correctly by "(?P<username>(?:[^"]|\\")*)" in quiz "(?P<quiz_name>(?:[^"]|\\")*)"$/
      *
      * @param string $questionname
@@ -218,6 +223,7 @@ class behat_block_quizleaderboard extends behat_base {
      * This is the scenario that previously exposed the "zero marks show as
      * not-attempted" bug, so it is exercised heavily across the suite.
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Given /^question "(?P<question_name>(?:[^"]|\\")*)" is answered incorrectly by "(?P<username>(?:[^"]|\\")*)" in quiz "(?P<quiz_name>(?:[^"]|\\")*)"$/
      *
      * @param string $questionname
@@ -232,6 +238,7 @@ class behat_block_quizleaderboard extends behat_base {
      * Same as "answered correctly", but the graded step is timestamped at a
      * specific relative time, used by time-travel scenarios.
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Given /^question "(?P<question_name>(?:[^"]|\\")*)" was answered correctly by "(?P<username>(?:[^"]|\\")*)" in quiz "(?P<quiz_name>(?:[^"]|\\")*)" at "(?P<when>(?:[^"]|\\")*)"$/
      *
      * @param string $questionname
@@ -250,6 +257,7 @@ class behat_block_quizleaderboard extends behat_base {
     /**
      * Same as "answered incorrectly", but at a specific relative time.
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Given /^question "(?P<question_name>(?:[^"]|\\")*)" was answered incorrectly by "(?P<username>(?:[^"]|\\")*)" in quiz "(?P<quiz_name>(?:[^"]|\\")*)" at "(?P<when>(?:[^"]|\\")*)"$/
      *
      * @param string $questionname
@@ -265,9 +273,7 @@ class behat_block_quizleaderboard extends behat_base {
         $this->submit_response($questionname, $username, $quizname, false, $timestamp);
     }
 
-    // -------------------------------------------------------------------
-    // Navigation
-    // -------------------------------------------------------------------
+    // Navigation.
 
     /**
      * Navigate directly to the standalone full-width leaderboard page for a
@@ -283,9 +289,7 @@ class behat_block_quizleaderboard extends behat_base {
         $this->getSession()->visit($this->locate_path($url->out_as_local_url(false)));
     }
 
-    // -------------------------------------------------------------------
-    // Time-travel interactions
-    // -------------------------------------------------------------------
+    // Time-travel interactions.
 
     /**
      * Tick the time-travel mode checkbox on, revealing and enabling the slider.
@@ -342,9 +346,7 @@ class behat_block_quizleaderboard extends behat_base {
         $session->wait(1500, false);
     }
 
-    // -------------------------------------------------------------------
-    // Sorting interactions
-    // -------------------------------------------------------------------
+    // Sorting interactions.
 
     /**
      * Click a leaderboard column header by its visible label to toggle sort.
@@ -387,14 +389,13 @@ class behat_block_quizleaderboard extends behat_base {
         $this->wait_for_pending_js();
     }
 
-    // -------------------------------------------------------------------
-    // Assertions
-    // -------------------------------------------------------------------
+    // Assertions.
 
     /**
      * Assert that a specific student's cell for a given question number shows
      * the expected text and CSS class.
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Then /^the leaderboard cell for "(?P<student_name>(?:[^"]|\\")*)" question (?P<qnum>\d+) should show "(?P<text>(?:[^"]|\\")*)" with class "(?P<cssclass>(?:[^"]|\\")*)"$/
      *
      * @param string $studentname
@@ -427,6 +428,7 @@ class behat_block_quizleaderboard extends behat_base {
      * carry a given CSS class (used to assert e.g. a zero-mark cell is not
      * also marked as "not attempted").
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Then /^the leaderboard cell for "(?P<student_name>(?:[^"]|\\")*)" question (?P<qnum>\d+) should not have class "(?P<cssclass>(?:[^"]|\\")*)"$/
      *
      * @param string $studentname
@@ -779,6 +781,7 @@ class behat_block_quizleaderboard extends behat_base {
      * Assert that the description cell at a given physical slot for a named
      * student shows the expected text.
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Then /^the leaderboard description cell at slot (?P<slotnum>\d+) for "(?P<student_name>(?:[^"]|\\")*)" should show "(?P<expected>(?:[^"]|\\")*)"$/
      *
      * @param int    $slotnum
@@ -800,6 +803,7 @@ class behat_block_quizleaderboard extends behat_base {
     /**
      * Assert that the description cell at a given physical slot carries a CSS class.
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Then /^the leaderboard description cell at slot (?P<slotnum>\d+) for "(?P<student_name>(?:[^"]|\\")*)" should have class "(?P<cssclass>(?:[^"]|\\")*)"$/
      *
      * @param int    $slotnum
@@ -821,6 +825,7 @@ class behat_block_quizleaderboard extends behat_base {
     /**
      * Assert that the description cell at a given physical slot does NOT carry a CSS class.
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Then /^the leaderboard description cell at slot (?P<slotnum>\d+) for "(?P<student_name>(?:[^"]|\\")*)" should not have class "(?P<cssclass>(?:[^"]|\\")*)"$/
      *
      * @param int    $slotnum
@@ -842,6 +847,7 @@ class behat_block_quizleaderboard extends behat_base {
     /**
      * Assert the number of rows in the leaderboard table inside a given block.
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Then /^the number of rows in the leaderboard table in the "(?P<block_name>(?:[^"]|\\")*)" "(?:block)" should be (?P<count>\d+)$/
      *
      * @param string $blockname
@@ -876,6 +882,7 @@ class behat_block_quizleaderboard extends behat_base {
      * block's HTML, which is simpler and sufficient for our purposes (e.g.
      * asserting the "View full leaderboard" link renders above the table).
      *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
      * @Then /^the "(?P<linktext>(?:[^"]|\\")*)" link should appear before "(?P<followingtext>(?:[^"]|\\")*)" in the "(?P<blockname>(?:[^"]|\\")*)" "(?:block)"$/
      *
      * @param string $linktext
@@ -903,9 +910,7 @@ class behat_block_quizleaderboard extends behat_base {
         }
     }
 
-    // -------------------------------------------------------------------
-    // Internal helpers
-    // -------------------------------------------------------------------
+    // Internal helpers.
 
     /**
      * Resolve and cache a quiz's id from its name.
@@ -1143,7 +1148,7 @@ class behat_block_quizleaderboard extends behat_base {
 
         // Look up the truefalse answer IDs (trueanswer / falseanswer).
         // qtype_truefalse stores two records in question_answers:
-        //   fraction=1 => the correct answer, fraction=0 => the wrong answer.
+        // fraction=1 => the correct answer, fraction=0 => the wrong answer.
         $answers = $DB->get_records('question_answers', ['question' => $qa->questionid], 'fraction DESC');
         $correctanswerid = null;
         $wronganswerid   = null;
@@ -1337,8 +1342,8 @@ class behat_block_quizleaderboard extends behat_base {
         $headers = $table->findAll('css', 'thead th');
 
         foreach ($headers as $th) {
-            // getText() on a multi-line header like:
-            //   <th>Total<br><span class="ql-subheader">Out of 20</span></th>
+            // The getText() call on a multi-line header like:
+            // <th>Total<br><span class="ql-subheader">Out of 20</span></th>
             // returns something like "Total Out of 20" or "TotalOut of 20"
             // depending on the browser driver, so simple string matching
             // against the full text is unreliable.

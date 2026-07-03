@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Standalone full-width leaderboard page.
@@ -61,17 +69,15 @@ if (!has_capability('block/quizleaderboard:viewall', $context)) {
     throw new \moodle_exception('nopermissions', 'error', '', get_string('leaderboard', 'block_quizleaderboard'));
 }
 
-// Adaptive mode check.
-$adaptivemodes = ['adaptive', 'adaptivenopenalty'];
-if (!in_array($quiz->preferredbehaviour, $adaptivemodes)) {
-    echo $OUTPUT->header();
-    echo $OUTPUT->notification(get_string('notadaptive', 'block_quizleaderboard'), 'warning');
-    echo $OUTPUT->footer();
-    die;
-}
-
 // Render.
 $renderer = $PAGE->get_renderer('block_quizleaderboard');
+
+// For deferred-feedback quizzes, marks only appear after the quiz is submitted
+// and graded — show a contextual note so teachers know what to expect.
+// Questions that grade interactively regardless of quiz behaviour (e.g.
+// CodeRunner) will still show marks as students answer them.
+$deferredbehaviours = ['deferredfeedback', 'deferredcbm'];
+$isdeferred = in_array($quiz->preferredbehaviour, $deferredbehaviours);
 
 echo $OUTPUT->header();
 
@@ -94,11 +100,18 @@ echo html_writer::tag(
     ['class' => 'mb-3']
 );
 
+if ($isdeferred) {
+    echo html_writer::div(
+        get_string('deferredfeedbacknote', 'block_quizleaderboard'),
+        'alert alert-info ql-deferred-note'
+    );
+}
+
 // Time-travel controls (toggle + slider). The slider's range is computed from
 // the actual earliest/latest step timestamps for this quiz so it always covers
 // exactly the period during which activity occurred.
 $service     = new leaderboard_service($quiz, true);
-$probe       = $service->get_data(); // live data, also gives us earliest/latest bounds.
+$probe       = $service->get_data(); // Live data, also gives us earliest/latest bounds.
 $hasanytimedata = !empty($probe->earliest_time) && !empty($probe->latest_time)
     && $probe->latest_time > $probe->earliest_time;
 

@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * English language strings for block_quizleaderboard.
@@ -41,7 +49,7 @@ $string['notstarted']        = 'Not started';
 $string['noattempts']        = 'No attempts have been made yet.';
 $string['noquizselected']    = 'No quiz selected. Configure this block to choose a quiz, or place it on a quiz page.';
 $string['quiznotfound']      = 'The configured quiz could not be found.';
-$string['notadaptive']       = 'This quiz is not in adaptive mode. The leaderboard requires adaptive or adaptive (no penalties) question behaviour so that per-question marks can be calculated.';
+$string['notadaptive']       = 'This quiz is not in adaptive mode. Per-question marks will only appear after the quiz is submitted and graded.';
 $string['sortasc']           = 'Sort ascending';
 $string['sortdesc']          = 'Sort descending';
 $string['lastupdated']       = 'Last updated: {$a}';
@@ -79,5 +87,6 @@ $string['autoupdateevery']  = 'Every';
 $string['autoupdateseconds'] = 'seconds';
 $string['slidergotime']     = 'Jump to:';
 $string['slidergoto']       = 'Go';
+$string['deferredfeedbacknote'] = 'This quiz uses deferred feedback. Per-question marks will appear once a student submits their attempt and grading is complete. Questions that grade interactively (such as CodeRunner) will show marks as students answer them.';
 // Privacy.
 $string['privacy:metadata'] = 'The Quiz Leaderboard block only displays existing quiz attempt data stored by the quiz module. It does not store any personal data itself.';

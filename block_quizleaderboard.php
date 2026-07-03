@@ -8,16 +8,20 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Quiz Leaderboard block main class.
  *
- * Displays a live leaderboard for students attempting an open adaptive-mode quiz.
+ * Displays a live leaderboard for students attempting an open quiz.
+ * Works with any quiz behaviour — adaptive mode shows marks question-by-question
+ * as students answer; deferred-feedback mode shows marks once the quiz is
+ * submitted and graded (or immediately for questions like CodeRunner that
+ * grade interactively regardless of the quiz-level behaviour setting).
  * Shows per-question marks colour-coded green/orange/red/dash, plus running totals.
  * The table is fully sortable client-side.
  *
@@ -25,8 +29,6 @@
  * @copyright  2024 Your Name <you@example.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Block class definition.
@@ -81,7 +83,7 @@ class block_quizleaderboard extends block_base {
      * @return stdClass Block content object.
      */
     public function get_content() {
-        global $DB, $PAGE, $OUTPUT;
+        global $DB, $OUTPUT;
 
         if ($this->content !== null) {
             return $this->content;
@@ -94,8 +96,8 @@ class block_quizleaderboard extends block_base {
         $quizid = !empty($this->config->quizid) ? (int)$this->config->quizid : 0;
 
         // Auto-detect quiz from page context if not explicitly configured.
-        if (!$quizid && $PAGE->cm && $PAGE->cm->modname === 'quiz') {
-            $quizid = $PAGE->cm->instance;
+        if (!$quizid && $this->page->cm && $this->page->cm->modname === 'quiz') {
+            $quizid = $this->page->cm->instance;
         }
 
         if (!$quizid) {
@@ -116,16 +118,6 @@ class block_quizleaderboard extends block_base {
             return $this->content;
         }
 
-        // Verify the quiz is in adaptive mode (preferFeedback == 'adaptive' or 'adaptivenopenalty').
-        $adaptivemodes = ['adaptive', 'adaptivenopenalty'];
-        if (!in_array($quiz->preferredbehaviour, $adaptivemodes)) {
-            $this->content->text = html_writer::div(
-                get_string('notadaptive', 'block_quizleaderboard'),
-                'alert alert-warning'
-            );
-            return $this->content;
-        }
-
         // Only teachers, non-editing teachers, and managers may view the
         // leaderboard. Students get an empty content object — the block
         // renders as blank rather than showing any error or content.
@@ -138,7 +130,7 @@ class block_quizleaderboard extends block_base {
         }
 
         // Build the leaderboard HTML (compact sidebar view).
-        $renderer = $PAGE->get_renderer('block_quizleaderboard');
+        $renderer = $this->page->get_renderer('block_quizleaderboard');
         $this->content->text = $renderer->render_leaderboard($quiz, true, true, null, $this->config ?? null);
 
         return $this->content;

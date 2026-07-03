@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Renderer for block_quizleaderboard.
@@ -13,8 +21,6 @@
  * @copyright  2024 Your Name <you@example.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
 
 use block_quizleaderboard\leaderboard_service;
 
@@ -49,8 +55,6 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         ?int $asoftime = null,
         ?stdClass $config = null
     ): string {
-        global $PAGE;
-
         $config = $config ?? new stdClass();
 
         $showstudentid  = !empty($config->showstudentid);
@@ -67,14 +71,14 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
             );
         }
 
-        $PAGE->requires->js_call_amd('block_quizleaderboard/leaderboard', 'init');
+        $this->page->requires->js_call_amd('block_quizleaderboard/leaderboard', 'init');
 
         $fullpageurl = new moodle_url('/blocks/quizleaderboard/leaderboard.php', ['quizid' => $quiz->id]);
 
         $html = '';
 
         if ($compact) {
-            // "View full leaderboard" button at the TOP so it is always accessible.
+            // The "View full leaderboard" button at the TOP so it is always accessible.
             $html .= html_writer::div(
                 html_writer::link(
                     $fullpageurl,
@@ -111,9 +115,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         return html_writer::div($html, 'block-quizleaderboard');
     }
 
-    // -------------------------------------------------------------------------
-    // Compact sidebar table
-    // -------------------------------------------------------------------------
+    // Compact sidebar table.
 
     /**
      * Compact rank / name / total / % table for the sidebar block.
@@ -131,7 +133,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         $headcells  = $this->sortable_th(get_string('rank', 'block_quizleaderboard'), $colidx++, 'ql-col-rank');
         $headcells .= $this->sortable_th(get_string('student', 'block_quizleaderboard'), $colidx++, 'ql-col-name');
 
-        // "Total\nOut of N" header — two lines.
+        // The "Total\nOut of N" header — two lines.
         $totalheader = get_string('total', 'block_quizleaderboard')
             . html_writer::empty_tag('br')
             . html_writer::tag('span',
@@ -190,9 +192,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         return html_writer::div($table, 'ql-table-wrapper') . $truncnote;
     }
 
-    // -------------------------------------------------------------------------
-    // Full per-question table (standalone page)
-    // -------------------------------------------------------------------------
+    // Full per-question table (standalone page).
 
     /**
      * Full table with per-question colour-coded marks for the standalone page.
@@ -208,7 +208,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         $rows     = $data->rows;
         $totalmax = $data->total_max;
 
-        // ---- THEAD ----
+        // Table head.
         $colidx    = 0;
         $headcells = '';
 
@@ -217,7 +217,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         // Student ID always shown on the full page.
         $headcells .= $this->sortable_th(get_string('studentid', 'block_quizleaderboard'), $colidx++, 'ql-col-id');
 
-        // "Total / Out of N" two-line header.
+        // The "Total / Out of N" two-line header.
         $totalheader = get_string('total', 'block_quizleaderboard')
             . html_writer::empty_tag('br')
             . html_writer::tag('span',
@@ -252,7 +252,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
 
         $thead = html_writer::tag('thead', html_writer::tag('tr', $headcells));
 
-        // ---- TBODY ----
+        // Table body.
         $tbodyrows  = '';
         $studentnum = 0;
         foreach ($rows as $row) {
@@ -350,8 +350,12 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
     public function render_quiz_timing_info(stdClass $quiz, stdClass $data): string {
         $format = get_string('strftimedatetimeshort', 'langconfig');
 
-        $opentime  = !empty($quiz->timeopen)  ? userdate($quiz->timeopen, $format)  : get_string('noopendate', 'block_quizleaderboard');
-        $closetime = !empty($quiz->timeclose) ? userdate($quiz->timeclose, $format) : get_string('noclosedate', 'block_quizleaderboard');
+        $opentime  = !empty($quiz->timeopen)
+            ? userdate($quiz->timeopen, $format)
+            : get_string('noopendate', 'block_quizleaderboard');
+        $closetime = !empty($quiz->timeclose)
+            ? userdate($quiz->timeclose, $format)
+            : get_string('noclosedate', 'block_quizleaderboard');
 
         if (!empty($quiz->timeopen) && !empty($quiz->timeclose) && $quiz->timeclose > $quiz->timeopen) {
             $duration = format_time($quiz->timeclose - $quiz->timeopen);
@@ -410,8 +414,6 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
      * @return string HTML.
      */
     public function render_timetravel_controls(stdClass $quiz, stdClass $data, int $currentasoftime, bool $hasanytimedata): string {
-        global $PAGE;
-
         $enabled = $currentasoftime > 0;
 
         $toggle = html_writer::div(
@@ -518,7 +520,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
             'data-rangeinvalidmsg' => get_string('rangeinvalid', 'block_quizleaderboard'),
         ];
 
-        $PAGE->requires->js_call_amd('block_quizleaderboard/timetravel', 'init');
+        $this->page->requires->js_call_amd('block_quizleaderboard/timetravel', 'init');
 
         return html_writer::div($html, '', $wrapperattrs);
     }
@@ -621,7 +623,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         if ($timestamp <= 0) {
             return '';
         }
-        // 'Y-m-d\TH:i' matches the datetime-local input format exactly.
+        // The 'Y-m-d\TH:i' format matches the datetime-local input format exactly.
         return userdate($timestamp, '%Y-%m-%dT%H:%M', core_date::get_user_timezone(), false);
     }
 
@@ -637,8 +639,6 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
      * @return string HTML.
      */
     public function render_autoupdate_controls(int $currentasoftime): string {
-        global $PAGE;
-
         $hidden = $currentasoftime > 0;
 
         $checkbox = html_writer::tag('label',
@@ -667,7 +667,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
 
         $inner = html_writer::div($checkbox . $intervalfield, 'form-check d-flex align-items-center flex-wrap gap-2');
 
-        $PAGE->requires->js_call_amd('block_quizleaderboard/autoupdate', 'init');
+        $this->page->requires->js_call_amd('block_quizleaderboard/autoupdate', 'init');
 
         return html_writer::div($inner, 'ql-autoupdate-controls mb-3' . ($hidden ? ' d-none' : ''), [
             'id'             => 'ql-autoupdate-controls',
@@ -676,9 +676,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         ]);
     }
 
-    // -------------------------------------------------------------------------
-    // Shared helpers
-    // -------------------------------------------------------------------------
+    // Shared helpers.
 
     /**
      * Colour-coded legend.
