@@ -33,7 +33,6 @@ use core_privacy\local\metadata\null_provider;
  * Privacy provider — this plugin stores no personal data.
  */
 class provider implements null_provider {
-
     /**
      * Return the reason this plugin stores no personal data.
      *

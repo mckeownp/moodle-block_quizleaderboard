@@ -26,7 +26,6 @@
  * Form for configuring a block_quizleaderboard instance.
  */
 class block_quizleaderboard_edit_form extends block_edit_form {
-
     /**
      * Add instance-specific settings to the form.
      *

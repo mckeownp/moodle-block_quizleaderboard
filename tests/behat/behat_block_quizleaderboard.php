@@ -48,7 +48,6 @@ use mod_quiz\quiz_attempt;
  * Behat context for block_quizleaderboard step definitions.
  */
 class behat_block_quizleaderboard extends behat_base {
-
     /**
      * In-memory map of quizname => quiz id, populated as scenarios reference
      * quizzes by name, to avoid repeated DB lookups within one scenario.
@@ -1203,7 +1202,7 @@ class behat_block_quizleaderboard extends behat_base {
             'complete', 'invalid', 'gradedright', 'gradedwrong', 'gradedpartial',
             'mangrright', 'mangrwrong', 'mangrpartial', 'gave_up',
         ];
-        list($statesql, $stateparams) = $DB->get_in_or_equal($answeredstates, SQL_PARAMS_NAMED, 'state');
+        [$statesql, $stateparams] = $DB->get_in_or_equal($answeredstates, SQL_PARAMS_NAMED, 'state');
 
         $sql = "SELECT id
                   FROM {question_attempt_steps}

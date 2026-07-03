@@ -31,7 +31,6 @@ define('QL_COMPACT_MAX_ROWS', 20);
  * Output renderer for the Quiz Leaderboard block.
  */
 class block_quizleaderboard_renderer extends plugin_renderer_base {
-
     /**
      * Render the leaderboard.
      *
@@ -100,14 +99,20 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
             // Historical replay mode — show the point in time being displayed
             // instead of "last updated now", so it's unambiguous to the teacher.
             $html .= html_writer::div(
-                get_string('viewingasof', 'block_quizleaderboard',
-                    userdate($asoftime, get_string('strftimedatetimeshort', 'langconfig'))),
+                get_string(
+                    'viewingasof',
+                    'block_quizleaderboard',
+                    userdate($asoftime, get_string('strftimedatetimeshort', 'langconfig'))
+                ),
                 'ql-updated ql-historical text-muted small mt-1'
             );
         } else {
             $html .= html_writer::div(
-                get_string('lastupdated', 'block_quizleaderboard',
-                    userdate(time(), get_string('strftimedatetimeshort', 'langconfig'))),
+                get_string(
+                    'lastupdated',
+                    'block_quizleaderboard',
+                    userdate(time(), get_string('strftimedatetimeshort', 'langconfig'))
+                ),
                 'ql-updated text-muted small mt-1'
             );
         }
@@ -136,9 +141,11 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         // The "Total\nOut of N" header — two lines.
         $totalheader = get_string('total', 'block_quizleaderboard')
             . html_writer::empty_tag('br')
-            . html_writer::tag('span',
+            . html_writer::tag(
+                'span',
                 get_string('outof', 'block_quizleaderboard', format_float($totalmax, 2, true)),
-                ['class' => 'ql-subheader']);
+                ['class' => 'ql-subheader']
+            );
         $headcells .= $this->sortable_th_raw($totalheader, $colidx++, 'ql-col-total');
 
         if ($showpercentage) {
@@ -156,15 +163,27 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
                 ? get_string('student', 'block_quizleaderboard') . ' ' . $studentnum
                 : trim($row->firstname . ' ' . $row->lastname);
 
-            $cells  = html_writer::tag('td', $row->rank,
-                          ['data-sort' => $row->rank, 'class' => 'ql-rank']);
-            $cells .= html_writer::tag('td', s($displayname),
-                          ['data-sort' => strtolower($displayname), 'class' => 'ql-name']);
-            $cells .= html_writer::tag('td', format_float($row->total_raw, 2, true),
-                          ['data-sort' => $row->total_raw, 'class' => 'ql-total']);
+            $cells  = html_writer::tag(
+                'td',
+                $row->rank,
+                ['data-sort' => $row->rank, 'class' => 'ql-rank']
+            );
+            $cells .= html_writer::tag(
+                'td',
+                s($displayname),
+                ['data-sort' => strtolower($displayname), 'class' => 'ql-name']
+            );
+            $cells .= html_writer::tag(
+                'td',
+                format_float($row->total_raw, 2, true),
+                ['data-sort' => $row->total_raw, 'class' => 'ql-total']
+            );
             if ($showpercentage) {
-                $cells .= html_writer::tag('td', $row->percentage . '%',
-                              ['data-sort' => $row->percentage, 'class' => 'ql-pct']);
+                $cells .= html_writer::tag(
+                    'td',
+                    $row->percentage . '%',
+                    ['data-sort' => $row->percentage, 'class' => 'ql-pct']
+                );
             }
 
             $tbodyrows .= html_writer::tag('tr', $cells);
@@ -212,17 +231,19 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         $colidx    = 0;
         $headcells = '';
 
-        $headcells .= $this->sortable_th(get_string('rank',      'block_quizleaderboard'), $colidx++, 'ql-col-rank');
-        $headcells .= $this->sortable_th(get_string('student',   'block_quizleaderboard'), $colidx++, 'ql-col-name');
+        $headcells .= $this->sortable_th(get_string('rank', 'block_quizleaderboard'), $colidx++, 'ql-col-rank');
+        $headcells .= $this->sortable_th(get_string('student', 'block_quizleaderboard'), $colidx++, 'ql-col-name');
         // Student ID always shown on the full page.
         $headcells .= $this->sortable_th(get_string('studentid', 'block_quizleaderboard'), $colidx++, 'ql-col-id');
 
         // The "Total / Out of N" two-line header.
         $totalheader = get_string('total', 'block_quizleaderboard')
             . html_writer::empty_tag('br')
-            . html_writer::tag('span',
+            . html_writer::tag(
+                'span',
                 get_string('outof', 'block_quizleaderboard', format_float($totalmax, 2, true)),
-                ['class' => 'ql-subheader']);
+                ['class' => 'ql-subheader']
+            );
         $headcells .= $this->sortable_th_raw($totalheader, $colidx++, 'ql-col-total');
 
         if ($showpercentage) {
@@ -248,20 +269,35 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
                 ? get_string('student', 'block_quizleaderboard') . ' ' . $studentnum
                 : trim($row->firstname . ' ' . $row->lastname);
 
-            $cells  = html_writer::tag('td', $row->rank,
-                          ['data-sort' => $row->rank, 'class' => 'ql-rank']);
-            $cells .= html_writer::tag('td', s($displayname),
-                          ['data-sort' => strtolower($displayname), 'class' => 'ql-name']);
-            $cells .= html_writer::tag('td', s($row->idnumber),
-                          ['data-sort' => strtolower($row->idnumber), 'class' => 'ql-idnumber']);
+            $cells  = html_writer::tag(
+                'td',
+                $row->rank,
+                ['data-sort' => $row->rank, 'class' => 'ql-rank']
+            );
+            $cells .= html_writer::tag(
+                'td',
+                s($displayname),
+                ['data-sort' => strtolower($displayname), 'class' => 'ql-name']
+            );
+            $cells .= html_writer::tag(
+                'td',
+                s($row->idnumber),
+                ['data-sort' => strtolower($row->idnumber), 'class' => 'ql-idnumber']
+            );
 
             // Total: just the raw mark, no "/max" — that's in the header.
-            $cells .= html_writer::tag('td', format_float($row->total_raw, 2, true),
-                          ['data-sort' => $row->total_raw, 'class' => 'ql-total']);
+            $cells .= html_writer::tag(
+                'td',
+                format_float($row->total_raw, 2, true),
+                ['data-sort' => $row->total_raw, 'class' => 'ql-total']
+            );
 
             if ($showpercentage) {
-                $cells .= html_writer::tag('td', $row->percentage . '%',
-                              ['data-sort' => $row->percentage, 'class' => 'ql-pct']);
+                $cells .= html_writer::tag(
+                    'td',
+                    $row->percentage . '%',
+                    ['data-sort' => $row->percentage, 'class' => 'ql-pct']
+                );
             }
 
             foreach ($slots as $slot) {
@@ -352,11 +388,11 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
             : get_string('na', 'block_quizleaderboard');
 
         $items = [
-            ['label' => get_string('quizopens',  'block_quizleaderboard'), 'value' => $opentime],
-            ['label' => get_string('quizcloses',  'block_quizleaderboard'), 'value' => $closetime],
+            ['label' => get_string('quizopens', 'block_quizleaderboard'), 'value' => $opentime],
+            ['label' => get_string('quizcloses', 'block_quizleaderboard'), 'value' => $closetime],
             ['label' => get_string('quizduration', 'block_quizleaderboard'), 'value' => $duration],
             ['label' => get_string('firstquestionactivity', 'block_quizleaderboard'), 'value' => $firstactivity],
-            ['label' => get_string('lastquestionactivity',  'block_quizleaderboard'), 'value' => $lastactivity],
+            ['label' => get_string('lastquestionactivity', 'block_quizleaderboard'), 'value' => $lastactivity],
         ];
 
         $html = '';
@@ -397,7 +433,8 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         $enabled = $currentasoftime > 0;
 
         $toggle = html_writer::div(
-            html_writer::tag('label',
+            html_writer::tag(
+                'label',
                 html_writer::empty_tag('input', [
                     'type'    => 'checkbox',
                     'id'      => 'ql-timetravel-toggle',
@@ -453,7 +490,8 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
             // Manual datetime entry — lets the teacher type or pick a specific
             // point in time to jump directly to, rather than dragging the slider.
             html_writer::div(
-                html_writer::tag('label',
+                html_writer::tag(
+                    'label',
                     get_string('slidergotime', 'block_quizleaderboard'),
                     ['for' => 'ql-slider-gotime', 'class' => 'ql-range-label mb-0']
                 ) .
@@ -464,7 +502,8 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
                     'value'    => $this->timestamp_to_datetime_local($currentasoftime > 0 ? $currentasoftime : $latest),
                     'disabled' => !$enabled,
                 ]) .
-                html_writer::tag('button',
+                html_writer::tag(
+                    'button',
                     get_string('slidergoto', 'block_quizleaderboard'),
                     [
                         'type'     => 'button',
@@ -621,7 +660,8 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
     public function render_autoupdate_controls(int $currentasoftime): string {
         $hidden = $currentasoftime > 0;
 
-        $checkbox = html_writer::tag('label',
+        $checkbox = html_writer::tag(
+            'label',
             html_writer::empty_tag('input', [
                 'type'    => 'checkbox',
                 'id'      => 'ql-autoupdate-toggle',
@@ -631,7 +671,8 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
             ['class' => 'form-check-label']
         );
 
-        $intervalfield = html_writer::tag('label',
+        $intervalfield = html_writer::tag(
+            'label',
             get_string('autoupdateevery', 'block_quizleaderboard') . ' ' .
             html_writer::empty_tag('input', [
                 'type'  => 'number',
@@ -663,10 +704,10 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
      */
     private function render_legend(): string {
         $items = [
-            ['class' => 'ql-full',        'key' => 'fullmarks'],
-            ['class' => 'ql-partial',     'key' => 'partialmarks'],
-            ['class' => 'ql-zero',        'key' => 'zeromarks'],
-            ['class' => 'ql-notdone',     'key' => 'notattempted'],
+            ['class' => 'ql-full', 'key' => 'fullmarks'],
+            ['class' => 'ql-partial', 'key' => 'partialmarks'],
+            ['class' => 'ql-zero', 'key' => 'zeromarks'],
+            ['class' => 'ql-notdone', 'key' => 'notattempted'],
         ];
 
         $html = '';
@@ -706,5 +747,4 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
 
         return html_writer::tag('th', $labelhtml . $icon, $attrs);
     }
-
 }

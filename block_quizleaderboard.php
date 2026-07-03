@@ -34,7 +34,6 @@
  * Block class definition.
  */
 class block_quizleaderboard extends block_base {
-
     /**
      * Initialise the block.
      */

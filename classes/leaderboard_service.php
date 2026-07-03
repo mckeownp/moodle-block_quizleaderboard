@@ -37,7 +37,6 @@ namespace block_quizleaderboard;
  * Service class for retrieving live (or historical) leaderboard data.
  */
 class leaderboard_service {
-
     /**
      * question_attempt_steps states that represent a graded/answered submission,
      * as opposed to 'todo' (awaiting input) or other non-graded bookkeeping states.
@@ -62,6 +61,8 @@ class leaderboard_service {
     private $canviewall;
 
     /**
+     * Construct a leaderboard service for a given quiz.
+     *
      * @param \stdClass $quiz       The quiz DB record.
      * @param bool      $canviewall True for teacher/manager view.
      */
@@ -204,7 +205,7 @@ class leaderboard_service {
         // than trying to express "latest graded step" purely in SQL, which proved
         // fragile across DB engines and adaptive-mode's todo/graded step interleaving.
         $attemptids = array_column($bestattempt, 'attemptid');
-        list($idsql, $idparams) = $DB->get_in_or_equal($attemptids, SQL_PARAMS_NAMED, 'atid');
+        [$idsql, $idparams] = $DB->get_in_or_equal($attemptids, SQL_PARAMS_NAMED, 'atid');
 
         $sql = "SELECT qas.id                 AS stepid,
                        qas.questionattemptid,
