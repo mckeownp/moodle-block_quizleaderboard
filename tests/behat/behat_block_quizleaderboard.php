@@ -680,33 +680,31 @@ class behat_block_quizleaderboard extends behat_base {
     }
 
     /**
-     * Assert that the Nth column header in the leaderboard table shows a
-     * specific label — used to verify that description slots show a plain
-     * dash and that real question slots carry the correct sequential number.
+     * Assert that the Nth question column header in the leaderboard table
+     * shows a specific label. Description questions carry no column at all,
+     * so column N always corresponds to the Nth *scored* question, regardless
+     * of how many descriptions precede it in the quiz.
      *
-     * $slot is 1-indexed and refers to the physical slot position (not the
-     * question number), so a description at slot 1 is checked with slotnum=1.
+     * @Then /^the leaderboard column header (?P<colnum>\d+) should show "(?P<expected>(?:[^"]|\\")*)"$/
      *
-     * @Then /^the leaderboard column header at slot (?P<slotnum>\d+) should show "(?P<expected>(?:[^"]|\\")*)"$/
-     *
-     * @param int    $slotnum  1-indexed physical slot position in the table.
+     * @param int    $colnum   1-indexed question column position.
      * @param string $expected The expected visible text of the header cell.
      */
-    public function leaderboard_column_header_at_slot_should_show(int $slotnum, string $expected) {
+    public function leaderboard_column_header_should_show(int $colnum, string $expected) {
         $table = $this->find('css', 'table.ql-table');
 
-        // Only select question/description column headers (ql-col-q class),
-        // not the fixed columns (rank #, Student, ID, Total, %) which precede them.
+        // Only select question column headers (ql-col-q class), not the fixed
+        // columns (rank #, Student, ID, Total, %) which precede them.
         $headers = $table->findAll('css', 'thead th.ql-col-q');
 
-        if (!isset($headers[$slotnum - 1])) {
+        if (!isset($headers[$colnum - 1])) {
             throw new ExpectationException(
-                "The leaderboard table does not have a question/description column at slot $slotnum",
+                "The leaderboard table does not have a question column $colnum",
                 $this->getSession()
             );
         }
 
-        $th   = $headers[$slotnum - 1];
+        $th   = $headers[$colnum - 1];
         $html = $th->getHtml();
 
         // Strip subheader and sort icon spans to get just the main label text.
@@ -716,129 +714,27 @@ class behat_block_quizleaderboard extends behat_base {
 
         if ($actual !== $expected) {
             throw new ExpectationException(
-                "Expected question column header at slot $slotnum to show '$expected' but found '$actual'",
+                "Expected question column header $colnum to show '$expected' but found '$actual'",
                 $this->getSession()
             );
         }
     }
 
     /**
-     * Convenience step: asserts that the header at slot N is a description
-     * placeholder (the bare "-" dash) rather than a question number.
+     * Assert the number of question columns in the leaderboard table —
+     * used to confirm that description questions add no columns at all.
      *
-     * @Then /^the leaderboard column header at slot (?P<slotnum>\d+) should show "-" for a description$/
+     * @Then /^the leaderboard table should have (?P<count>\d+) question column(?:s)?$/
      *
-     * @param int $slotnum
+     * @param int $count Expected number of question columns.
      */
-    public function leaderboard_column_header_at_slot_is_description(int $slotnum) {
-        $this->leaderboard_column_header_at_slot_should_show($slotnum, '-');
+    public function leaderboard_table_should_have_question_columns(int $count) {
+        $table  = $this->find('css', 'table.ql-table');
+        $actual = count($table->findAll('css', 'thead th.ql-col-q'));
 
-        // Also verify the column carries the ql-col-description CSS class.
-        $table   = $this->find('css', 'table.ql-table');
-        $headers = $table->findAll('css', 'thead th.ql-col-q');
-        $th      = $headers[$slotnum - 1];
-        $class   = $th->getAttribute('class') ?? '';
-
-        if (strpos($class, 'ql-col-description') === false) {
+        if ($actual !== $count) {
             throw new ExpectationException(
-                "Expected column header at slot $slotnum to have class 'ql-col-description' but found '$class'",
-                $this->getSession()
-            );
-        }
-    }
-
-    /**
-     * Find the Nth <td> in a student's leaderboard row by physical slot
-     * position (1-indexed). This is intentionally different from
-     * find_leaderboard_question_cell(), which finds the Nth *scored* question
-     * cell (skipping descriptions) — here we address the raw column index.
-     *
-     * "Slot" includes all columns: rank, name, id, total, %, then slot 1...N.
-     * The offset for the first question column depends on which fixed columns
-     * are shown. We locate the right td by counting from the first ql-q cell
-     * (which is always the first question/description column, regardless of
-     * how many fixed columns precede it).
-     *
-     * @param string $studentname
-     * @param int    $slotnum 1-indexed question slot position.
-     * @return \Behat\Mink\Element\NodeElement
-     */
-    protected function find_slot_cell_in_row(string $studentname, int $slotnum) {
-        $row    = $this->find_leaderboard_row($studentname);
-        $qcells = $row->findAll('css', 'td.ql-q, td.ql-description');
-
-        if (!isset($qcells[$slotnum - 1])) {
-            throw new ExpectationException(
-                "Row for '$studentname' does not have a cell at slot $slotnum",
-                $this->getSession()
-            );
-        }
-
-        return $qcells[$slotnum - 1];
-    }
-
-    /**
-     * Assert that the description cell at a given physical slot for a named
-     * student shows the expected text.
-     *
-     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
-     * @Then /^the leaderboard description cell at slot (?P<slotnum>\d+) for "(?P<student_name>(?:[^"]|\\")*)" should show "(?P<expected>(?:[^"]|\\")*)"$/
-     *
-     * @param int    $slotnum
-     * @param string $studentname
-     * @param string $expected
-     */
-    public function leaderboard_description_cell_should_show(int $slotnum, string $studentname, string $expected) {
-        $cell   = $this->find_slot_cell_in_row($studentname, $slotnum);
-        $actual = trim($cell->getText());
-
-        if ($actual !== $expected) {
-            throw new ExpectationException(
-                "Expected description cell at slot $slotnum for '$studentname' to show '$expected' but found '$actual'",
-                $this->getSession()
-            );
-        }
-    }
-
-    /**
-     * Assert that the description cell at a given physical slot carries a CSS class.
-     *
-     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
-     * @Then /^the leaderboard description cell at slot (?P<slotnum>\d+) for "(?P<student_name>(?:[^"]|\\")*)" should have class "(?P<cssclass>(?:[^"]|\\")*)"$/
-     *
-     * @param int    $slotnum
-     * @param string $studentname
-     * @param string $cssclass
-     */
-    public function leaderboard_description_cell_should_have_class(int $slotnum, string $studentname, string $cssclass) {
-        $cell        = $this->find_slot_cell_in_row($studentname, $slotnum);
-        $actualclass = $cell->getAttribute('class') ?? '';
-
-        if (strpos($actualclass, $cssclass) === false) {
-            throw new ExpectationException(
-                "Expected description cell at slot $slotnum for '$studentname' to have class '$cssclass' but found '$actualclass'",
-                $this->getSession()
-            );
-        }
-    }
-
-    /**
-     * Assert that the description cell at a given physical slot does NOT carry a CSS class.
-     *
-     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
-     * @Then /^the leaderboard description cell at slot (?P<slotnum>\d+) for "(?P<student_name>(?:[^"]|\\")*)" should not have class "(?P<cssclass>(?:[^"]|\\")*)"$/
-     *
-     * @param int    $slotnum
-     * @param string $studentname
-     * @param string $cssclass
-     */
-    public function leaderboard_description_cell_should_not_have_class(int $slotnum, string $studentname, string $cssclass) {
-        $cell        = $this->find_slot_cell_in_row($studentname, $slotnum);
-        $actualclass = $cell->getAttribute('class') ?? '';
-
-        if (strpos($actualclass, $cssclass) !== false) {
-            throw new ExpectationException(
-                "Expected description cell at slot $slotnum for '$studentname' NOT to have class '$cssclass' but it did",
+                "Expected $count question column(s) in the leaderboard table but found $actual",
                 $this->getSession()
             );
         }

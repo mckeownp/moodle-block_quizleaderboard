@@ -231,23 +231,10 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
 
         $qnum = 1;
         foreach ($slots as $slot) {
-            if ($slot->qtype === 'description') {
-                // Description questions are not real scored questions — show a
-                // dash in the header with a tooltip, and do NOT increment the
-                // question counter so that the next real question keeps the
-                // correct sequential number.
-                $headcells .= $this->sortable_th(
-                    '-',
-                    $colidx++,
-                    'ql-col-q ql-col-description',
-                    get_string('descriptionquestion', 'block_quizleaderboard')
-                );
-            } else {
-                $label   = get_string('question_short', 'block_quizleaderboard', $qnum);
-                $tooltip = "Q{$qnum} (" . get_string('outof', 'block_quizleaderboard', format_float($slot->maxmark, 2, true)) . ')';
-                $headcells .= $this->sortable_th($label, $colidx++, 'ql-col-q', $tooltip);
-                $qnum++;
-            }
+            $label   = get_string('question_short', 'block_quizleaderboard', $qnum);
+            $tooltip = "Q{$qnum} (" . get_string('outof', 'block_quizleaderboard', format_float($slot->maxmark, 2, true)) . ')';
+            $headcells .= $this->sortable_th($label, $colidx++, 'ql-col-q', $tooltip);
+            $qnum++;
         }
 
         $thead = html_writer::tag('thead', html_writer::tag('tr', $headcells));
@@ -281,14 +268,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
                 $s    = $slot->slot;
                 $mark = $row->question_marks[$s] ?? null;
 
-                if ($mark === false) {
-                    // Description question — informational only, no mark possible.
-                    $cells .= html_writer::tag('td', 'n/a', [
-                        'data-sort' => -2,
-                        'class'     => 'ql-description',
-                        'title'     => get_string('descriptionquestion', 'block_quizleaderboard'),
-                    ]);
-                } else if ($mark === null) {
+                if ($mark === null) {
                     // Real question, not yet attempted.
                     $cells .= html_writer::tag('td', '-', [
                         'data-sort' => -1,
@@ -687,7 +667,6 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
             ['class' => 'ql-partial',     'key' => 'partialmarks'],
             ['class' => 'ql-zero',        'key' => 'zeromarks'],
             ['class' => 'ql-notdone',     'key' => 'notattempted'],
-            ['class' => 'ql-description', 'key' => 'descriptionquestion'],
         ];
 
         $html = '';

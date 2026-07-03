@@ -1,9 +1,10 @@
 @block @block_quizleaderboard
-Feature: Quiz leaderboard handles description questions correctly
-  In order to see an accurate leaderboard for quizzes that contain descriptions
+Feature: Quiz leaderboard excludes description questions
+  In order to see an uncluttered leaderboard for quizzes that contain descriptions
   As a teacher
-  I need description questions to show as n/a sentinels and real questions
-  to be numbered sequentially ignoring the descriptions
+  I need description questions to be completely excluded from the leaderboard
+  table, with real questions numbered sequentially and totals/percentages
+  unaffected, regardless of where the descriptions sit in the quiz
 
   Background:
     Given the following "users" exist:
@@ -32,7 +33,7 @@ Feature: Quiz leaderboard handles description questions correctly
   # Quiz with description at the START then two real questions
   # -----------------------------------------------------------------------
 
-  Scenario: Description at slot 1 shows n/a and first real question is labelled Q1
+  Scenario: Description at the start adds no column and Q1/Q2 are numbered from 1
     Given the following "activities" exist:
       | activity | name          | course | idnumber | preferredbehaviour |
       | quiz     | Desc-first    | C1     | qdf      | adaptive            |
@@ -45,11 +46,11 @@ Feature: Quiz leaderboard handles description questions correctly
     And user "student1" has begun a leaderboard attempt at quiz "Desc-first"
     When I log in as "teacher1"
     And I view the full leaderboard for quiz "Desc-first"
-    Then the leaderboard column header at slot 1 should show "-" for a description
-    And the leaderboard column header at slot 2 should show "Q1"
-    And the leaderboard column header at slot 3 should show "Q2"
+    Then the leaderboard table should have 2 question columns
+    And the leaderboard column header 1 should show "Q1"
+    And the leaderboard column header 2 should show "Q2"
 
-  Scenario: Description at slot 1 cell shows n/a not a dash or zero for a student
+  Scenario: Description at the start adds no cell to a student's row
     Given the following "activities" exist:
       | activity | name          | course | idnumber | preferredbehaviour |
       | quiz     | Desc-first    | C1     | qdf      | adaptive            |
@@ -63,10 +64,7 @@ Feature: Quiz leaderboard handles description questions correctly
     And question "Q1" is answered correctly by "student1" in quiz "Desc-first"
     When I log in as "teacher1"
     And I view the full leaderboard for quiz "Desc-first"
-    Then the leaderboard description cell at slot 1 for "Alice Anderson" should show "n/a"
-    And the leaderboard description cell at slot 1 for "Alice Anderson" should have class "ql-description"
-    And the leaderboard description cell at slot 1 for "Alice Anderson" should not have class "ql-notdone"
-    And the leaderboard description cell at slot 1 for "Alice Anderson" should not have class "ql-zero"
+    Then the leaderboard cell for "Alice Anderson" question 1 should show "5.00" with class "ql-full"
 
   Scenario: Description does not count towards the total mark or percentage
     Given the following "activities" exist:
@@ -91,7 +89,7 @@ Feature: Quiz leaderboard handles description questions correctly
   # Quiz with description in the MIDDLE
   # -----------------------------------------------------------------------
 
-  Scenario: Description in the middle gives sequential numbering either side
+  Scenario: Description in the middle adds no column and does not break numbering
     Given the following "activities" exist:
       | activity | name          | course | idnumber | preferredbehaviour |
       | quiz     | Desc-mid      | C1     | qdm      | adaptive            |
@@ -104,31 +102,15 @@ Feature: Quiz leaderboard handles description questions correctly
     And user "student1" has begun a leaderboard attempt at quiz "Desc-mid"
     When I log in as "teacher1"
     And I view the full leaderboard for quiz "Desc-mid"
-    Then the leaderboard column header at slot 1 should show "Q1"
-    And the leaderboard column header at slot 2 should show "-" for a description
-    And the leaderboard column header at slot 3 should show "Q2"
-
-  Scenario: Description in the middle cell shows n/a not zero or dash
-    Given the following "activities" exist:
-      | activity | name          | course | idnumber | preferredbehaviour |
-      | quiz     | Desc-mid      | C1     | qdm      | adaptive            |
-    And quiz "Desc-mid" contains the following questions:
-      | question | page |
-      | Q1       | 1    |
-      | D1       | 1    |
-      | Q2       | 1    |
-    And the block_quizleaderboard plugin is added with quizid for "Desc-mid" in course "C1"
-    And user "student1" has begun a leaderboard attempt at quiz "Desc-mid"
-    When I log in as "teacher1"
-    And I view the full leaderboard for quiz "Desc-mid"
-    Then the leaderboard description cell at slot 2 for "Alice Anderson" should show "n/a"
-    And the leaderboard description cell at slot 2 for "Alice Anderson" should have class "ql-description"
+    Then the leaderboard table should have 2 question columns
+    And the leaderboard column header 1 should show "Q1"
+    And the leaderboard column header 2 should show "Q2"
 
   # -----------------------------------------------------------------------
   # Quiz with description at the END
   # -----------------------------------------------------------------------
 
-  Scenario: Description at the end gives correct numbering for preceding questions
+  Scenario: Description at the end adds no trailing column
     Given the following "activities" exist:
       | activity | name          | course | idnumber | preferredbehaviour |
       | quiz     | Desc-end      | C1     | qde      | adaptive            |
@@ -141,15 +123,15 @@ Feature: Quiz leaderboard handles description questions correctly
     And user "student1" has begun a leaderboard attempt at quiz "Desc-end"
     When I log in as "teacher1"
     And I view the full leaderboard for quiz "Desc-end"
-    Then the leaderboard column header at slot 1 should show "Q1"
-    And the leaderboard column header at slot 2 should show "Q2"
-    And the leaderboard column header at slot 3 should show "-" for a description
+    Then the leaderboard table should have 2 question columns
+    And the leaderboard column header 1 should show "Q1"
+    And the leaderboard column header 2 should show "Q2"
 
   # -----------------------------------------------------------------------
   # Quiz with MULTIPLE descriptions interspersed
   # -----------------------------------------------------------------------
 
-  Scenario: Multiple descriptions with real questions numbered correctly throughout
+  Scenario: Multiple descriptions are all excluded, leaving only real questions numbered sequentially
     Given the following "activities" exist:
       | activity | name          | course | idnumber | preferredbehaviour |
       | quiz     | Desc-multi    | C1     | qdm2     | adaptive            |
@@ -164,33 +146,9 @@ Feature: Quiz leaderboard handles description questions correctly
     And user "student1" has begun a leaderboard attempt at quiz "Desc-multi"
     When I log in as "teacher1"
     And I view the full leaderboard for quiz "Desc-multi"
-    Then the leaderboard column header at slot 1 should show "-" for a description
-    And the leaderboard column header at slot 2 should show "Q1"
-    And the leaderboard column header at slot 3 should show "-" for a description
-    And the leaderboard column header at slot 4 should show "Q2"
-    And the leaderboard column header at slot 5 should show "-" for a description
-
-  Scenario: Multiple description cells all show n/a for a student
-    Given the following "activities" exist:
-      | activity | name          | course | idnumber | preferredbehaviour |
-      | quiz     | Desc-multi    | C1     | qdm2     | adaptive            |
-    And quiz "Desc-multi" contains the following questions:
-      | question | page |
-      | D1       | 1    |
-      | Q1       | 1    |
-      | D2       | 1    |
-      | Q2       | 1    |
-      | D3       | 1    |
-    And the block_quizleaderboard plugin is added with quizid for "Desc-multi" in course "C1"
-    And user "student1" has begun a leaderboard attempt at quiz "Desc-multi"
-    When I log in as "teacher1"
-    And I view the full leaderboard for quiz "Desc-multi"
-    Then the leaderboard description cell at slot 1 for "Alice Anderson" should show "n/a"
-    And the leaderboard description cell at slot 3 for "Alice Anderson" should show "n/a"
-    And the leaderboard description cell at slot 5 for "Alice Anderson" should show "n/a"
-    And the leaderboard description cell at slot 1 for "Alice Anderson" should have class "ql-description"
-    And the leaderboard description cell at slot 3 for "Alice Anderson" should have class "ql-description"
-    And the leaderboard description cell at slot 5 for "Alice Anderson" should have class "ql-description"
+    Then the leaderboard table should have 2 question columns
+    And the leaderboard column header 1 should show "Q1"
+    And the leaderboard column header 2 should show "Q2"
 
   Scenario: Scored questions between descriptions have correct marks
     Given the following "activities" exist:

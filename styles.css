@@ -349,18 +349,6 @@
     height: 2.1rem;
 }
 
-/* Description question cells — neutral grey, not coloured like scored cells */
-.ql-table td.ql-description {
-    background-color: #f0f0f0;
-    color: #999;
-    font-style: italic;
-}
-
-.ql-swatch.ql-description {
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-}
-
 /* =========================================================
    Auto-update controls
    ========================================================= */
@@ -404,8 +392,3 @@
     white-space: nowrap;
 }
 
-/* Description question column header — muted, matches cell style */
-.ql-table th.ql-col-description {
-    opacity: 0.6;
-    font-style: italic;
-}

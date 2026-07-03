@@ -80,7 +80,6 @@ $string['noopendate']        = 'No open date set';
 $string['noclosedate']       = 'No close date set';
 $string['na']                 = 'n/a';
 $string['rangeinvalid']      = 'The range end must be after the range start.';
-$string['descriptionquestion'] = 'Description (no mark)';
 $string['backtoquiz']       = 'Back to quiz page';
 $string['autoupdate']       = 'Auto-update leaderboard';
 $string['autoupdateevery']  = 'Every';

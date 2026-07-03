@@ -122,11 +122,11 @@ class leaderboard_service {
 
         $data = new \stdClass();
 
-        // 1. Quiz slots in order, including question type so we can identify
-        // description questions (qtype='description') which have no mark
-        // and should display as a neutral dash rather than a red zero.
+        // 1. Quiz slots in order. Description questions carry no mark and are
+        // purely informational, so they are excluded here and never appear in
+        // the leaderboard table at all.
         // Moodle 5.0+ always has question_references/question_versions tables.
-        $sql = "SELECT qs.id, qs.slot, qs.maxmark, q.qtype
+        $sql = "SELECT qs.id, qs.slot, qs.maxmark
                   FROM {quiz_slots} qs
                   JOIN {question_references} qr
                     ON qr.itemid = qs.id
@@ -141,6 +141,7 @@ class leaderboard_service {
                        )
                   JOIN {question} q ON q.id = qv.questionid
                  WHERE qs.quizid = :quizid
+                   AND q.qtype <> 'description'
               ORDER BY qs.slot ASC";
 
         $slots = $DB->get_records_sql($sql, ['quizid' => $this->quiz->id]);
@@ -281,13 +282,10 @@ class leaderboard_service {
         $data->first_question_activity = $firstquestionactivity;
         $data->last_question_activity  = $lastquestionactivity;
 
-        // Slot maxmark map — description questions always have maxmark=0,
-        // but we exclude them from the total so they don't affect percentages.
+        // Slot maxmark map.
         $slotmaxmark = [];
         foreach ($slots as $slot) {
-            if ($slot->qtype !== 'description') {
-                $slotmaxmark[$slot->slot] = (float)$slot->maxmark;
-            }
+            $slotmaxmark[$slot->slot] = (float)$slot->maxmark;
         }
         $totalmax = array_sum($slotmaxmark);
 
@@ -305,16 +303,6 @@ class leaderboard_service {
 
             foreach ($slots as $slot) {
                 $s = $slot->slot;
-
-                // Description questions are informational only — they have no
-                // mark, no steps, and should display as a neutral dash rather
-                // than a red zero or a "not attempted" dash.  We use false as
-                // a sentinel to distinguish this case from null (= a real
-                // question that has not yet been answered).
-                if ($slot->qtype === 'description') {
-                    $row->question_marks[$s] = false;
-                    continue;
-                }
 
                 $steps = $stepsbyattemptslot[$attempt->attemptid][$s] ?? [];
                 $mark  = $this->derive_mark_from_steps($steps, $slotmaxmark[$s], $asoftime);
