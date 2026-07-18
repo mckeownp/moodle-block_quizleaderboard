@@ -12,8 +12,8 @@ jobs:
 
     services:
       postgres:
-        image: postgres:14
-        env:
+        image: postgres:latest
+b        env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
         ports:
