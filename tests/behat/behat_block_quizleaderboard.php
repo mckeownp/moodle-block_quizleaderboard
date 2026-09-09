@@ -234,6 +234,38 @@ class behat_block_quizleaderboard extends behat_base {
     }
 
     /**
+     * Mark the question in a given SLOT as answered correctly, for quizzes where
+     * the question cannot be named up front.
+     *
+     * Random slots need this: the question a random slot serves is chosen when
+     * the attempt starts, so a scenario can only refer to it by position.
+     *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
+     * @Given /^the question in slot (?P<slot>\d+) is answered correctly by "(?P<username>(?:[^"]|\\")*)" in quiz "(?P<quiz_name>(?:[^"]|\\")*)"$/
+     *
+     * @param int    $slot
+     * @param string $username
+     * @param string $quizname
+     */
+    public function slot_is_answered_correctly(int $slot, string $username, string $quizname) {
+        $this->submit_response_for_slot($slot, $username, $quizname, true, null);
+    }
+
+    /**
+     * Mark the question in a given SLOT as answered incorrectly (zero marks).
+     *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
+     * @Given /^the question in slot (?P<slot>\d+) is answered incorrectly by "(?P<username>(?:[^"]|\\")*)" in quiz "(?P<quiz_name>(?:[^"]|\\")*)"$/
+     *
+     * @param int    $slot
+     * @param string $username
+     * @param string $quizname
+     */
+    public function slot_is_answered_incorrectly(int $slot, string $username, string $quizname) {
+        $this->submit_response_for_slot($slot, $username, $quizname, false, null);
+    }
+
+    /**
      * Same as "answered correctly", but the graded step is timestamped at a
      * specific relative time, used by time-travel scenarios.
      *
@@ -886,13 +918,18 @@ class behat_block_quizleaderboard extends behat_base {
         $usage->id = $DB->insert_record('question_usages', $usage);
 
         // 2. For each quiz slot, create a question_attempts row + initial 'todo' step.
+        // Random slots resolve to a concrete question here, exactly as starting a
+        // real attempt would; $drawnquestionids stops two slots sharing one pool
+        // from drawing the same question.
         $slots = $DB->get_records('quiz_slots', ['quizid' => $quiz->id], 'slot ASC');
+        $drawnquestionids = [];
         foreach ($slots as $slot) {
             $qa = new stdClass();
             $qa->questionusageid   = $usage->id;
             $qa->slot              = $slot->slot;
             $qa->behaviour         = $quiz->preferredbehaviour;
-            $qa->questionid        = $this->get_question_id_for_slot($slot);
+            $qa->questionid        = $this->get_question_id_for_slot($slot, $drawnquestionids);
+            $drawnquestionids[]    = $qa->questionid;
             $qa->variant           = 1;
             $qa->maxmark           = $slot->maxmark;
             $qa->minfraction       = 0;
@@ -938,14 +975,28 @@ class behat_block_quizleaderboard extends behat_base {
     }
 
     /**
-     * Get the questionid for a quiz slot using the Moodle 5.0+ question bank
-     * schema (question_references → question_versions), which is always present
-     * on the versions this plugin supports.
+     * Get the questionid to record for a quiz slot.
      *
-     * @param \stdClass $slot quiz_slots row
+     * Slots come in two flavours and Moodle stores them in DIFFERENT tables:
+     *
+     *  - A slot holding a SPECIFIC question has a question_references row,
+     *    resolved through question_versions to the question itself.
+     *  - A RANDOM slot has NO question_references row at all. It has a
+     *    question_set_references row instead, whose filtercondition describes
+     *    the POOL to draw from; which concrete question a student gets is only
+     *    decided per-attempt, when the real quiz starts the attempt.
+     *
+     * Assuming every slot has a question_references row is exactly the mistake
+     * that hid random questions from the leaderboard (see
+     * leaderboard_random_questions.feature), so this helper handles both.
+     *
+     * @param \stdClass $slot       quiz_slots row
+     * @param int[]     $excludeids Question ids already drawn for this attempt, so
+     *                              several slots sharing one pool draw different
+     *                              questions, the way core does.
      * @return int
      */
-    protected function get_question_id_for_slot(\stdClass $slot): int {
+    protected function get_question_id_for_slot(\stdClass $slot, array $excludeids = []): int {
         global $DB;
 
         $sql = "SELECT qv.questionid
@@ -961,7 +1012,84 @@ class behat_block_quizleaderboard extends behat_base {
             return (int)$rec->questionid;
         }
 
+        // No specific question, so this should be a random slot. Draw from its pool.
+        $setref = $DB->get_record('question_set_references', [
+            'itemid'       => $slot->id,
+            'component'    => 'mod_quiz',
+            'questionarea' => 'slot',
+        ]);
+        if ($setref) {
+            return $this->draw_question_from_pool($setref, $excludeids);
+        }
+
         throw new \coding_exception("Cannot resolve questionid for slot {$slot->id}");
+    }
+
+    /**
+     * Pick the question a random slot should serve, given its pool.
+     *
+     * The pick is DELIBERATELY DETERMINISTIC — the first not-yet-drawn question
+     * in the pool, in question bank entry order, which is the order the
+     * questions were declared in the feature file's "questions exist" table.
+     * Real quizzes pick at random, but a scenario has to be able to say "the
+     * question in slot 2 is answered correctly" and get the same result on
+     * every run; genuine randomness would make per-column assertions
+     * untestable. What matters for the leaderboard is that the slot resolves to
+     * SOME real question from the right pool, not which one.
+     *
+     * @param \stdClass $setref     question_set_references row for the slot
+     * @param int[]     $excludeids Question ids already drawn for this attempt
+     * @return int
+     */
+    protected function draw_question_from_pool(\stdClass $setref, array $excludeids): int {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/questionlib.php');
+
+        $filter = json_decode($setref->filtercondition, true);
+        if (!is_array($filter)) {
+            throw new \coding_exception("Unreadable filtercondition on question_set_reference {$setref->id}");
+        }
+
+        // Sites upgraded from before 4.3 store the older filter shape; this
+        // normalises both to the modern filter.category form.
+        $filter = \core_question\question_reference_manager::convert_legacy_set_reference_filter_condition($filter);
+
+        $categoryid = $filter['filter']['category']['values'][0] ?? null;
+        if (empty($categoryid)) {
+            throw new \coding_exception("Random slot pool has no category filter (set reference {$setref->id})");
+        }
+        $includesubcategories = !empty($filter['filter']['category']['filteroptions']['includesubcategories']);
+
+        $categoryids = $includesubcategories ? question_categorylist((int)$categoryid) : [(int)$categoryid];
+        [$catsql, $catparams] = $DB->get_in_or_equal($categoryids, SQL_PARAMS_NAMED, 'cat');
+
+        // Latest version of every bank entry in the pool, oldest entry first.
+        // 'random' itself is a question in the bank, and descriptions carry no
+        // mark, so neither is drawable — core excludes both the same way.
+        $sql = "SELECT qbe.id AS entryid, qv.questionid
+                  FROM {question_bank_entries} qbe
+                  JOIN {question_versions} qv
+                    ON qv.questionbankentryid = qbe.id
+                   AND qv.version = (
+                           SELECT MAX(v2.version)
+                             FROM {question_versions} v2
+                            WHERE v2.questionbankentryid = qbe.id
+                       )
+                  JOIN {question} q ON q.id = qv.questionid
+                 WHERE qbe.questioncategoryid $catsql
+                   AND q.qtype NOT IN ('random', 'description')
+              ORDER BY qbe.id ASC";
+
+        foreach ($DB->get_records_sql($sql, $catparams) as $candidate) {
+            if (!in_array((int)$candidate->questionid, $excludeids, true)) {
+                return (int)$candidate->questionid;
+            }
+        }
+
+        throw new \coding_exception(
+            "Random slot pool (category $categoryid) has no undrawn question left. " .
+            'Either add more questions to the pool, or point fewer random slots at it.'
+        );
     }
 
     /**
@@ -1023,19 +1151,68 @@ class behat_block_quizleaderboard extends behat_base {
      * @param int|null $when
      */
     protected function submit_response(string $questionname, string $username, string $quizname, bool $correct, ?int $when) {
+        $attempt = $this->ensure_attempt_record($username, $quizname, $when);
+        $slot    = $this->get_slot_for_question_by_name($attempt, $questionname);
+        $this->grade_slot($attempt, $slot, $username, $correct, $when);
+    }
+
+    /**
+     * Same as submit_response(), but addressing the question by SLOT NUMBER
+     * rather than by name.
+     *
+     * This is the only workable way to answer a random slot: which question a
+     * random slot serves is decided when the attempt starts, so a feature file
+     * cannot know its name up front — but it always knows the slot.
+     *
+     * @param int      $slot     Slot number within the quiz (1-based).
+     * @param string   $username
+     * @param string   $quizname
+     * @param bool     $correct
+     * @param int|null $when
+     */
+    protected function submit_response_for_slot(int $slot, string $username, string $quizname, bool $correct, ?int $when) {
+        $attempt = $this->ensure_attempt_record($username, $quizname, $when);
+        $this->grade_slot($attempt, $slot, $username, $correct, $when);
+    }
+
+    /**
+     * Fetch the quiz_attempts record for a user's attempt at a quiz, starting
+     * the attempt first if no step has done so yet.
+     *
+     * @param string   $username
+     * @param string   $quizname
+     * @param int|null $when Used only if the attempt still has to be started.
+     * @return \stdClass The quiz_attempts row.
+     */
+    protected function ensure_attempt_record(string $username, string $quizname, ?int $when): \stdClass {
         global $DB;
 
         $cachekey = $username . '|' . $quizname;
         if (!isset($this->attemptidcache[$cachekey])) {
             $this->start_attempt($username, $quizname, $when);
         }
-        $attemptid  = $this->attemptidcache[$cachekey];
-        $timestamp  = $when ?? time();
-        $user       = $DB->get_record('user', ['username' => $username], '*', MUST_EXIST);
-        $attempt    = $DB->get_record('quiz_attempts', ['id' => $attemptid], '*', MUST_EXIST);
+
+        return $DB->get_record('quiz_attempts', ['id' => $this->attemptidcache[$cachekey]], '*', MUST_EXIST);
+    }
+
+    /**
+     * Write the graded step (and adaptive-mode trailing 'todo' step) for one
+     * slot of an attempt, then refresh the attempt's sumgrades.
+     *
+     * @param \stdClass $attempt  quiz_attempts row.
+     * @param int       $slot     Slot number within the quiz.
+     * @param string    $username The answering student.
+     * @param bool      $correct
+     * @param int|null  $when     Timestamp for the graded step, or null for now.
+     */
+    protected function grade_slot(\stdClass $attempt, int $slot, string $username, bool $correct, ?int $when) {
+        global $DB;
+
+        $attemptid = $attempt->id;
+        $timestamp = $when ?? time();
+        $user      = $DB->get_record('user', ['username' => $username], '*', MUST_EXIST);
 
         // Find the question_attempts row for this slot.
-        $slot = $this->get_slot_for_question_by_name($attempt, $questionname);
         $qa = $DB->get_record('question_attempts', [
             'questionusageid' => $attempt->uniqueid,
             'slot'            => $slot,
@@ -1166,7 +1343,7 @@ class behat_block_quizleaderboard extends behat_base {
         foreach ($slots as $slot) {
             try {
                 $qid = $this->get_question_id_for_slot($slot);
-                $q = $DB->get_record('questions', ['id' => $qid], 'id, name', IGNORE_MISSING);
+                $q = $DB->get_record('question', ['id' => $qid], 'id, name', IGNORE_MISSING);
                 if ($q && $q->name === $questionname) {
                     return (int)$slot->slot;
                 }

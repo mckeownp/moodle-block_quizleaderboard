@@ -126,23 +126,36 @@ class leaderboard_service {
         // 1. Quiz slots in order. Description questions carry no mark and are
         // purely informational, so they are excluded here and never appear in
         // the leaderboard table at all.
+        //
+        // The joins below MUST be outer joins. Only a slot holding a specific
+        // question has a question_references row; a RANDOM slot is recorded in
+        // question_set_references instead (the pool is a filtercondition, and
+        // which concrete question a student got is only known per-attempt).
+        // Inner-joining question_references therefore dropped every random slot
+        // from the leaderboard entirely — no column, and no contribution to
+        // total_raw / total_max. See mod_quiz's own qbank_helper, which likewise
+        // LEFT JOINs both reference tables.
+        //
+        // Slots with no resolvable question row (random slots, and questions
+        // that have since been deleted from the bank) yield q.qtype = NULL, so
+        // the description filter has to tolerate NULL to keep them in.
         // Moodle 5.0+ always has question_references/question_versions tables.
         $sql = "SELECT qs.id, qs.slot, qs.maxmark
                   FROM {quiz_slots} qs
-                  JOIN {question_references} qr
+             LEFT JOIN {question_references} qr
                     ON qr.itemid = qs.id
                    AND qr.component = 'mod_quiz'
                    AND qr.questionarea = 'slot'
-                  JOIN {question_versions} qv
+             LEFT JOIN {question_versions} qv
                     ON qv.questionbankentryid = qr.questionbankentryid
                    AND qv.version = (
                            SELECT MAX(qv2.version)
                              FROM {question_versions} qv2
                             WHERE qv2.questionbankentryid = qr.questionbankentryid
                        )
-                  JOIN {question} q ON q.id = qv.questionid
+             LEFT JOIN {question} q ON q.id = qv.questionid
                  WHERE qs.quizid = :quizid
-                   AND q.qtype <> 'description'
+                   AND (q.qtype IS NULL OR q.qtype <> 'description')
               ORDER BY qs.slot ASC";
 
         $slots = $DB->get_records_sql($sql, ['quizid' => $this->quiz->id]);
