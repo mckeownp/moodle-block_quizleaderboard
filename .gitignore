@@ -26,7 +26,26 @@ yarn-debug.log*
 yarn-error.log*
 .npm/
 
+# Local tooling.
+/vendor/
+/node_modules/
+.phpunit.result.cache
+*.log
+build-amd.sh
+
+# amd/build/ is deliberately NOT ignored: Moodle plugins ship their built AMD modules,
+# and moodle-plugin-ci's grunt check fails if the committed build is missing or stale.
+# Rebuild with: npx grunt amd --root=local/quizrenumber (from a Moodle root, Node 22).
+
+
 # === PHP / Composer ===
 # Ignore vendor directory if you bring in external PHP libraries via Composer
 vendor/
 composer.phar
+
+# moodle-plugin-ci artifacts that land in the plugin folder.
+moodledata/
+package.json
+package-lock.json
+
+
