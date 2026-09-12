@@ -18,7 +18,7 @@
  *  - Auto-update is hidden and paused while time-travel mode is active
  *
  * @module     block_quizleaderboard/timetravel
- * @copyright  2024 Your Name <you@example.com>
+ * @copyright  2024 Paul McKeown
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define([], function() {

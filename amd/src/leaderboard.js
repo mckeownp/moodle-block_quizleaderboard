@@ -18,7 +18,7 @@
  * numeric or string values used for comparison.
  *
  * @module     block_quizleaderboard/leaderboard
- * @copyright  2024 Your Name <you@example.com>
+ * @copyright  2024 Paul McKeown
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define([], function() {

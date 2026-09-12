@@ -18,7 +18,7 @@
  * Renderer for block_quizleaderboard.
  *
  * @package    block_quizleaderboard
- * @copyright  2024 Your Name <you@example.com>
+ * @copyright  2024 Paul McKeown
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -722,6 +722,12 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
 
     /**
      * Sortable <th> with escaped plain-text label.
+     *
+     * @param  string      $label  Plain-text header label; escaped before output.
+     * @param  int         $colidx Zero-based column index, read by the sorting JS.
+     * @param  string      $class  Extra CSS classes for the cell.
+     * @param  string|null $title  Optional tooltip text, omitted when null.
+     * @return string HTML for the <th> element.
      */
     private function sortable_th(string $label, int $colidx, string $class = '', ?string $title = null): string {
         return $this->sortable_th_raw(s($label), $colidx, $class, $title);
@@ -729,6 +735,14 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
 
     /**
      * Sortable <th> accepting pre-built HTML label (e.g. multi-line headers).
+     *
+     * @param  string      $labelhtml Header label as HTML. Already-escaped or
+     *                                deliberately-built markup only; this is
+     *                                emitted verbatim, unlike sortable_th().
+     * @param  int         $colidx    Zero-based column index, read by the sorting JS.
+     * @param  string      $class     Extra CSS classes for the cell.
+     * @param  string|null $title     Optional tooltip text, omitted when null.
+     * @return string HTML for the <th> element.
      */
     private function sortable_th_raw(string $labelhtml, int $colidx, string $class = '', ?string $title = null): string {
         $attrs = [

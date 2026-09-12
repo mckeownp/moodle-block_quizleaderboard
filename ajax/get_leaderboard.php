@@ -20,7 +20,7 @@
  * to update the table live without a full page reload.
  *
  * @package    block_quizleaderboard
- * @copyright  2024 Your Name <you@example.com>
+ * @copyright  2024 Paul McKeown
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
