@@ -45,13 +45,13 @@ Feature: Quiz leaderboard includes randomly selected questions
       | Pool A           | truefalse   | PoolA-2 | Pool A question two    | 1           |
       | Pool A           | truefalse   | PoolA-3 | Pool A question three  | 1           |
       | Pool B           | truefalse   | PoolB-1 | Pool B question one    | 1           |
-    # Declared in their own table, without a defaultmark column: a random
-    # question carries no mark of its own, and core always creates random slots
-    # worth 1 regardless of what a maxmark column says.
-    And the following "questions" exist:
-      | questioncategory | qtype  | name            | questiontext |
-      | Pool A           | random | Random (Pool A) | 0            |
-      | Pool B           | random | Random (Pool B) | 0            |
+    # No random question is declared in the bank. Random slots are added with
+    # the plugin's own "has a random question drawn from category" step, because
+    # core's table syntax for them is version-specific: qtype_random was removed
+    # in Moodle 5.2, and the 'randomcategory' column that replaced it does not
+    # exist before 5.2. See that step's comment in behat_block_quizleaderboard.php.
+    # Core creates every random slot worth 1 mark on all versions, which the
+    # "Out of N" expectations below rely on.
 
   # -----------------------------------------------------------------------
   # Quiz made entirely of random questions
@@ -61,12 +61,10 @@ Feature: Quiz leaderboard includes randomly selected questions
     Given the following "activities" exist:
       | activity | name      | course | idnumber | preferredbehaviour |
       | quiz     | Rand-only | C1     | qro      | adaptive           |
-    And quiz "Rand-only" contains the following questions:
-      | question        | page |
-      | Random (Pool A) | 1    |
-      | Random (Pool A) | 1    |
-      | Random (Pool A) | 1    |
-      | Random (Pool B) | 1    |
+    And quiz "Rand-only" has a random question drawn from category "Pool A"
+    And quiz "Rand-only" has a random question drawn from category "Pool A"
+    And quiz "Rand-only" has a random question drawn from category "Pool A"
+    And quiz "Rand-only" has a random question drawn from category "Pool B"
     And the block_quizleaderboard plugin is added with quizid for "Rand-only" in course "C1"
     And user "student1" has begun a leaderboard attempt at quiz "Rand-only"
     When I log in as "teacher1"
@@ -83,12 +81,10 @@ Feature: Quiz leaderboard includes randomly selected questions
     Given the following "activities" exist:
       | activity | name      | course | idnumber | preferredbehaviour |
       | quiz     | Rand-only | C1     | qro      | adaptive           |
-    And quiz "Rand-only" contains the following questions:
-      | question        | page |
-      | Random (Pool A) | 1    |
-      | Random (Pool A) | 1    |
-      | Random (Pool A) | 1    |
-      | Random (Pool B) | 1    |
+    And quiz "Rand-only" has a random question drawn from category "Pool A"
+    And quiz "Rand-only" has a random question drawn from category "Pool A"
+    And quiz "Rand-only" has a random question drawn from category "Pool A"
+    And quiz "Rand-only" has a random question drawn from category "Pool B"
     And the block_quizleaderboard plugin is added with quizid for "Rand-only" in course "C1"
     And user "student1" has begun a leaderboard attempt at quiz "Rand-only"
     And the question in slot 1 is answered correctly by "student1" in quiz "Rand-only"
@@ -108,10 +104,8 @@ Feature: Quiz leaderboard includes randomly selected questions
     Given the following "activities" exist:
       | activity | name      | course | idnumber | preferredbehaviour |
       | quiz     | Rand-pair | C1     | qrp      | adaptive           |
-    And quiz "Rand-pair" contains the following questions:
-      | question        | page |
-      | Random (Pool A) | 1    |
-      | Random (Pool A) | 1    |
+    And quiz "Rand-pair" has a random question drawn from category "Pool A"
+    And quiz "Rand-pair" has a random question drawn from category "Pool A"
     And the block_quizleaderboard plugin is added with quizid for "Rand-pair" in course "C1"
     And user "student1" has begun a leaderboard attempt at quiz "Rand-pair"
     And the question in slot 2 is answered correctly by "student1" in quiz "Rand-pair"
@@ -133,10 +127,12 @@ Feature: Quiz leaderboard includes randomly selected questions
       | activity | name  | course | idnumber | preferredbehaviour |
       | quiz     | Mixed | C1     | qmx      | adaptive           |
     And quiz "Mixed" contains the following questions:
-      | question        | page |
-      | Fixed1          | 1    |
-      | Random (Pool A) | 1    |
-      | Fixed2          | 1    |
+      | question | page |
+      | Fixed1   | 1    |
+    And quiz "Mixed" has a random question drawn from category "Pool A"
+    And quiz "Mixed" contains the following questions:
+      | question | page |
+      | Fixed2   | 1    |
     And the block_quizleaderboard plugin is added with quizid for "Mixed" in course "C1"
     And user "student1" has begun a leaderboard attempt at quiz "Mixed"
     And question "Fixed1" is answered correctly by "student1" in quiz "Mixed"
@@ -156,10 +152,12 @@ Feature: Quiz leaderboard includes randomly selected questions
       | activity | name  | course | idnumber | preferredbehaviour |
       | quiz     | Mixed | C1     | qmx      | adaptive           |
     And quiz "Mixed" contains the following questions:
-      | question        | page |
-      | Fixed1          | 1    |
-      | Random (Pool A) | 1    |
-      | Fixed2          | 1    |
+      | question | page |
+      | Fixed1   | 1    |
+    And quiz "Mixed" has a random question drawn from category "Pool A"
+    And quiz "Mixed" contains the following questions:
+      | question | page |
+      | Fixed2   | 1    |
     And the block_quizleaderboard plugin is added with quizid for "Mixed" in course "C1"
     And user "student1" has begun a leaderboard attempt at quiz "Mixed"
     And question "Fixed1" is answered correctly by "student1" in quiz "Mixed"
@@ -180,10 +178,12 @@ Feature: Quiz leaderboard includes randomly selected questions
       | activity | name      | course | idnumber | preferredbehaviour |
       | quiz     | Desc-rand | C1     | qdr      | adaptive           |
     And quiz "Desc-rand" contains the following questions:
-      | question        | page |
-      | Desc1           | 1    |
-      | Random (Pool A) | 1    |
-      | Fixed1          | 1    |
+      | question | page |
+      | Desc1    | 1    |
+    And quiz "Desc-rand" has a random question drawn from category "Pool A"
+    And quiz "Desc-rand" contains the following questions:
+      | question | page |
+      | Fixed1   | 1    |
     And the block_quizleaderboard plugin is added with quizid for "Desc-rand" in course "C1"
     And user "student1" has begun a leaderboard attempt at quiz "Desc-rand"
     # Quiz slot 2 is the random question. The description occupies quiz slot 1

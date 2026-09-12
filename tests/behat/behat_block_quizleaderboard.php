@@ -108,6 +108,64 @@ class behat_block_quizleaderboard extends behat_base {
         context_block::instance($blockinstance->id);
     }
 
+    // Setup: adding random question slots.
+
+    /**
+     * Append a random question slot to a quiz, drawing from a named question
+     * category.
+     *
+     * Why this exists rather than using core's
+     * `quiz "X" contains the following questions:` table: core changed how a
+     * random slot is declared, and the two syntaxes are mutually exclusive.
+     *
+     *  - Up to Moodle 5.1 you created a question of qtype 'random' in the bank
+     *    and referenced it by name.
+     *  - Moodle 5.2 REMOVED qtype_random entirely, so that now dies with
+     *    "Question type random does not have test helper code"; instead you
+     *    pass an unused question name plus a 'randomcategory' column, which
+     *    earlier versions do not understand.
+     *
+     * Calling structure::add_random_questions() directly sidesteps the whole
+     * problem: its signature is identical on 4.5, 5.0, 5.1 and 5.2, and it
+     * needs no question in the bank at all. It also hard-codes maxmark to 1 on
+     * every version, which the feature's "Out of N" expectations rely on.
+     *
+     * Slots are appended in call order, so several of these steps (interleaved
+     * with core's table step for specific questions) build up a mixed quiz.
+     *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
+     * @Given /^quiz "(?P<quiz_name>(?:[^"]|\\")*)" has a random question drawn from category "(?P<category_name>(?:[^"]|\\")*)"$/
+     *
+     * @param string $quizname
+     * @param string $categoryname
+     */
+    public function quiz_has_a_random_question_from_category(string $quizname, string $categoryname) {
+        global $DB;
+
+        $quizid     = $this->get_quiz_id($quizname);
+        $categoryid = $DB->get_field('question_categories', 'id', ['name' => $categoryname], MUST_EXIST);
+
+        // The 'jointype' key is deliberately omitted: every supported version
+        // defaults it (JOINTYPE_DEFAULT) when absent, so leaving it out avoids
+        // depending on a qbank_managecategories constant that has moved about.
+        $filtercondition = [
+            'filter' => [
+                'category' => [
+                    'values' => [$categoryid],
+                    'filteroptions' => ['includesubcategories' => false],
+                ],
+            ],
+        ];
+
+        // Adding a random slot requires moodle/question:useall on the category's
+        // context, and Behat step code has no logged-in user of its own, so act
+        // as the admin for the call.
+        $this->as_user(get_admin(), function () use ($quizid, $filtercondition) {
+            $structure = \mod_quiz\structure::create_for_quiz(quiz_settings::create($quizid));
+            $structure->add_random_questions(1, 1, $filtercondition);
+        });
+    }
+
     // Setup: starting quiz attempts.
 
     /**
