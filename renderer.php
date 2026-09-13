@@ -60,6 +60,14 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
         $showpercentage = isset($config->showpercentage) ? (bool)$config->showpercentage : true;
         $anonymise      = !empty($config->anonymise);
 
+        // Anonymise overrides the student ID setting. An ID number identifies a
+        // student every bit as surely as their name does, so leaving the column
+        // in place would make an "anonymised" leaderboard anonymous in name
+        // only — which is precisely the case the setting exists to cover.
+        if ($anonymise) {
+            $showstudentid = false;
+        }
+
         $service = new leaderboard_service($quiz, $canviewall);
         $data    = $service->get_data($asoftime);
 
@@ -91,7 +99,7 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
             $html .= $this->render_compact_table($data, $anonymise, $showpercentage);
         } else {
             // Full per-question table for the standalone page.
-            $html .= $this->render_full_table($data, $showpercentage, $anonymise);
+            $html .= $this->render_full_table($data, $showpercentage, $anonymise, $showstudentid);
             $html .= $this->render_legend();
         }
 
@@ -215,14 +223,21 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
 
     /**
      * Full table with per-question colour-coded marks for the standalone page.
-     * Always includes student ID and total mark columns.
      *
      * @param stdClass $data
      * @param bool     $showpercentage
      * @param bool     $anonymise
+     * @param bool     $showstudentid Whether to include the student ID number column.
+     *                                The caller is responsible for having already
+     *                                forced this off when anonymising.
      * @return string
      */
-    private function render_full_table(stdClass $data, bool $showpercentage, bool $anonymise): string {
+    private function render_full_table(
+        stdClass $data,
+        bool $showpercentage,
+        bool $anonymise,
+        bool $showstudentid = false
+    ): string {
         $slots    = $data->slots;
         $rows     = $data->rows;
         $totalmax = $data->total_max;
@@ -233,8 +248,9 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
 
         $headcells .= $this->sortable_th(get_string('rank', 'block_quizleaderboard'), $colidx++, 'ql-col-rank');
         $headcells .= $this->sortable_th(get_string('student', 'block_quizleaderboard'), $colidx++, 'ql-col-name');
-        // Student ID always shown on the full page.
-        $headcells .= $this->sortable_th(get_string('studentid', 'block_quizleaderboard'), $colidx++, 'ql-col-id');
+        if ($showstudentid) {
+            $headcells .= $this->sortable_th(get_string('studentid', 'block_quizleaderboard'), $colidx++, 'ql-col-id');
+        }
 
         // The "Total / Out of N" two-line header.
         $totalheader = get_string('total', 'block_quizleaderboard')
@@ -279,11 +295,16 @@ class block_quizleaderboard_renderer extends plugin_renderer_base {
                 s($displayname),
                 ['data-sort' => strtolower($displayname), 'class' => 'ql-name']
             );
-            $cells .= html_writer::tag(
-                'td',
-                s($row->idnumber),
-                ['data-sort' => strtolower($row->idnumber), 'class' => 'ql-idnumber']
-            );
+            if ($showstudentid) {
+                // This is the user's ID number profile field (user.idnumber) —
+                // the institutional student ID — NOT the internal user.id
+                // database key, which is meaningless to a teacher.
+                $cells .= html_writer::tag(
+                    'td',
+                    s($row->idnumber),
+                    ['data-sort' => strtolower($row->idnumber), 'class' => 'ql-idnumber']
+                );
+            }
 
             // Total: just the raw mark, no "/max" — that's in the header.
             $cells .= html_writer::tag(

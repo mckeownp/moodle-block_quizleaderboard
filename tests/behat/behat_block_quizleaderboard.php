@@ -78,12 +78,61 @@ class behat_block_quizleaderboard extends behat_base {
      * @param string $courseshortname
      */
     public function the_block_is_added_for_quiz(string $quizname, string $courseshortname) {
+        $this->add_block_for_quiz($quizname, $courseshortname, []);
+    }
+
+    /**
+     * Add a block_quizleaderboard instance with specific display settings.
+     *
+     * Takes a two-column table of setting => value, e.g.
+     *
+     *     | showstudentid | 1 |
+     *     | anonymise     | 1 |
+     *
+     * Anything not listed keeps the default used by the plain "is added with
+     * quizid" step, so a scenario only has to state the settings it cares about.
+     *
+     * phpcs:ignore moodle.Files.LineLength.TooLong, moodle.Files.LineLength.MaxExceeded
+     * @Given /^the block_quizleaderboard plugin is added with quizid for "(?P<quiz_name>(?:[^"]|\\")*)" in course "(?P<course_shortname>(?:[^"]|\\")*)" with config:$/
+     *
+     * @param string    $quizname
+     * @param string    $courseshortname
+     * @param TableNode $table setting => value rows.
+     */
+    public function the_block_is_added_for_quiz_with_config(
+        string $quizname,
+        string $courseshortname,
+        TableNode $table
+    ) {
+        $config = [];
+        foreach ($table->getRowsHash() as $setting => $value) {
+            $config[$setting] = (int)$value;
+        }
+
+        $this->add_block_for_quiz($quizname, $courseshortname, $config);
+    }
+
+    /**
+     * Create the block_instances row for a leaderboard block on a quiz.
+     *
+     * @param string $quizname
+     * @param string $courseshortname
+     * @param array  $configoverrides Display settings overriding the defaults.
+     */
+    protected function add_block_for_quiz(string $quizname, string $courseshortname, array $configoverrides) {
         global $DB;
 
         $quizid = $this->get_quiz_id($quizname);
         $course = $DB->get_record('course', ['shortname' => $courseshortname], '*', MUST_EXIST);
 
         $context = context_course::instance($course->id);
+
+        $config = array_merge([
+            'showstudentid'   => 1,
+            'showpercentage'  => 1,
+            'anonymise'       => 0,
+        ], $configoverrides);
+        $config['quizid'] = $quizid;
 
         $blockinstance = new stdClass();
         $blockinstance->blockname     = 'quizleaderboard';
@@ -93,12 +142,7 @@ class behat_block_quizleaderboard extends behat_base {
         $blockinstance->subpagepattern  = null;
         $blockinstance->defaultregion   = 'side-pre';
         $blockinstance->defaultweight   = 0;
-        $blockinstance->configdata = base64_encode(serialize((object)[
-            'quizid'          => $quizid,
-            'showstudentid'   => 1,
-            'showpercentage'  => 1,
-            'anonymise'       => 0,
-        ]));
+        $blockinstance->configdata = base64_encode(serialize((object)$config));
         $blockinstance->timecreated  = time();
         $blockinstance->timemodified = time();
 
@@ -804,6 +848,54 @@ class behat_block_quizleaderboard extends behat_base {
         if ($actual !== $expected) {
             throw new ExpectationException(
                 "Expected question column header $colnum to show '$expected' but found '$actual'",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Assert the student ID number column is present in the leaderboard table.
+     *
+     * @Then /^the leaderboard table should show the student ID column$/
+     */
+    public function leaderboard_should_show_student_id_column() {
+        $this->assert_student_id_column(true);
+    }
+
+    /**
+     * Assert the student ID number column is absent from the leaderboard table.
+     *
+     * @Then /^the leaderboard table should not show the student ID column$/
+     */
+    public function leaderboard_should_not_show_student_id_column() {
+        $this->assert_student_id_column(false);
+    }
+
+    /**
+     * Shared assertion for the presence of the student ID column.
+     *
+     * Checks the header AND the body cells, because the column is emitted in
+     * two separate places — a change that hid only the header would still leak
+     * every student's ID number into the rows.
+     *
+     * @param bool $expected Whether the column should be present.
+     */
+    protected function assert_student_id_column(bool $expected) {
+        $table = $this->find('css', 'table.ql-table');
+
+        $headers = count($table->findAll('css', 'thead th.ql-col-id'));
+        $cells   = count($table->findAll('css', 'tbody td.ql-idnumber'));
+
+        if ($expected && ($headers < 1 || $cells < 1)) {
+            throw new ExpectationException(
+                "Expected a student ID column, but found $headers header cell(s) and $cells body cell(s)",
+                $this->getSession()
+            );
+        }
+
+        if (!$expected && ($headers > 0 || $cells > 0)) {
+            throw new ExpectationException(
+                "Expected no student ID column, but found $headers header cell(s) and $cells body cell(s)",
                 $this->getSession()
             );
         }

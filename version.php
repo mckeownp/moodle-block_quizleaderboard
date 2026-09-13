@@ -29,9 +29,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026070300;       // YYYYMMDDXX.
+$plugin->version   = 2026091300;       // YYYYMMDDXX.
 $plugin->requires  = 2024100700;       // Moodle 5.0.0.
 $plugin->component = 'block_quizleaderboard';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '2.3.0';
-$plugin->supported = [500, 503];       // Moodle 5.0 – 5.3.
+$plugin->release   = '2.3.1';
+$plugin->supported = [500, 503];       // Moodle 5.0 – 5.3. And maybe 4.5 if you are lucky...
